@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Base styles */
+@import "./styles/base.css";
+
+/* Modular page stylesheets */
+@import "./styles/dashboard.css";
+@import "./styles/rooms.css";
+@import "./styles/meter-readings.css";
+@import "./styles/payments.css";
+@import "./styles/statements.css";
+@import "./styles/reports.css";
+@import "./styles/settings.css";
+

@@ -1,0 +1,46 @@
+/* ==========================================================================
+   Statements Page Stylesheet
+   ========================================================================== */
+
+.statements-toolbar {
+  margin-bottom: 20px;
+}
+
+.statement-modal-body {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.statement-bill-to {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.statement-summary-box {
+  background-color: #f8fafc;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-top: 20px;
+}
+
+.statement-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+  padding: 4px 0;
+  color: #475569;
+}
+
+.statement-summary-row.total {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 10px;
+  margin-top: 6px;
+}

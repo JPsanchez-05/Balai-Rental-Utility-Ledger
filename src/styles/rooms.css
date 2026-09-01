@@ -1,0 +1,77 @@
+/* ==========================================================================
+   Rooms Page Stylesheet
+   ========================================================================== */
+
+.rooms-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.rooms-search-container {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+}
+
+.rooms-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.rooms-search-input {
+  padding-left: 44px !important;
+}
+
+.rooms-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.room-number-cell {
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.room-sub-info {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.tenant-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.tenant-contact {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.view-action-link {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s ease;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.view-action-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}

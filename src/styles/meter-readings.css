@@ -1,0 +1,165 @@
+/* ==========================================================================
+   Meter Readings Page Stylesheet
+   ========================================================================== */
+
+.meter-readings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.meter-card {
+  padding: 22px 26px;
+}
+
+.meter-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.meter-room-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.meter-room-no {
+  font-weight: 700;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.meter-room-tag {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.meter-tenant-name {
+  font-size: 13.5px;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.meter-total-charge {
+  text-align: right;
+}
+
+.meter-total-label {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.meter-total-amount {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.meter-total-breakdown {
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+
+.meter-utilities-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .meter-utilities-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.utility-block {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+
+.utility-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+
+.utility-header.electricity {
+  color: #d97706;
+}
+
+.utility-header.water {
+  color: #2563eb;
+}
+
+.reading-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.reading-prev-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.reading-prev-label {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.reading-prev-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.reading-arrow {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.reading-curr-box {
+  flex: 1;
+}
+
+.reading-curr-label {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.reading-input-field {
+  width: 100%;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.reading-input-field:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.utility-usage-calc {
+  font-size: 12.5px;
+  color: #475569;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
