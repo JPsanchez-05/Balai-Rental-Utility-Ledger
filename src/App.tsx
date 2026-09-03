@@ -46,47 +46,47 @@ export default function App() {
 
   // Application Data States
   const [metrics, setMetrics] = useState<DashboardMetrics>({
-    totalBilled: 88532,
-    totalCollected: 60149,
-    totalRentBilled: 57500,
-    totalRentPaid: 45000,
-    totalUtilitiesBilled: 31032,
-    totalUtilitiesPaid: 15149,
-    totalWaterPumpBilled: 1400,
-    totalWaterPumpPaid: 1200,
+    totalBilled: 0,
+    totalCollected: 0,
+    totalRentBilled: 0,
+    totalRentPaid: 0,
+    totalUtilitiesBilled: 0,
+    totalUtilitiesPaid: 0,
+    totalWaterPumpBilled: 0,
+    totalWaterPumpPaid: 0,
     waterPumpFeeTotal: 1400,
-    waterPumpFeePerTenant: 200,
-    operatingExpenses: 12000,
-    netProfit: 48149,
+    waterPumpFeePerTenant: 0,
+    operatingExpenses: 0,
+    netProfit: 0,
     netLoss: 0,
     isNetProfit: true,
-    collectionRate: 68,
-    outstanding: 28383,
-    roomsWithBalance: 7,
-    occupancyPercentage: 88,
-    occupiedRoomsCount: 7,
-    totalRoomsCount: 8,
+    collectionRate: 100,
+    outstanding: 0,
+    roomsWithBalance: 0,
+    occupancyPercentage: 0,
+    occupiedRoomsCount: 0,
+    totalRoomsCount: 6,
   });
   const [rooms, setRooms] = useState<Room[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [statements, setStatements] = useState<StatementItem[]>([]);
   const [settings, setSettings] = useState<PropertySettings>({
-    propertyName: 'Dela Cruz Apartelle',
-    landlordName: 'Rodrigo Dela Cruz',
-    address: '123 Mabini St., Quezon City, Metro Manila',
+    propertyName: 'Balai Rental Properties',
+    landlordName: 'Property Admin',
+    address: 'Metro Manila, Philippines',
     electricityRate: 11.5,
     waterRate: 85,
     monthlyWaterPumpFee: 1400,
-    monthlyOperatingExpense: 12000,
+    monthlyOperatingExpense: 0,
     version: '1.0.0',
-    totalRooms: 8,
-    totalTenants: 7,
+    totalRooms: 6,
+    totalTenants: 0,
   });
   const [revenueBreakdown, setRevenueBreakdown] = useState<RevenueBreakdownData>({
-    rent: 57500,
-    electricity: 16837,
-    water: 14195,
-    waterPump: 1400,
+    rent: 0,
+    electricity: 0,
+    water: 0,
+    waterPump: 0,
   });
   const [yearlyData, setYearlyData] = useState<YearlyReportData | undefined>(undefined);
 
@@ -191,6 +191,47 @@ export default function App() {
 
   const handleDeleteTenant = async (roomId: string) => {
     await api.deleteTenant(roomId);
+    await refreshData();
+  };
+
+  const handleEditRoom = async (
+    roomId: string,
+    updates: { roomNumber: string; floor: number; monthlyRent: number; status?: RoomStatus }
+  ) => {
+    await api.updateRoom(roomId, updates);
+    try {
+      await fetch(`/api/rooms/${roomId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+    } catch {
+      // client-side fallback is handled
+    }
+    await refreshData();
+  };
+
+  const handleDeleteRoom = async (roomId: string) => {
+    await api.deleteRoom(roomId);
+    try {
+      await fetch(`/api/rooms/${roomId}`, {
+        method: 'DELETE',
+      });
+    } catch {
+      // client-side fallback is handled
+    }
+    await refreshData();
+  };
+
+  const handleClearTestData = async () => {
+    await api.clearTestData();
+    try {
+      await fetch('/api/clear-test-data', {
+        method: 'POST',
+      });
+    } catch {
+      // client-side fallback is handled
+    }
     await refreshData();
   };
 
@@ -329,6 +370,9 @@ export default function App() {
             onOpenAddTenant={() => setIsAddTenantOpen(true)}
             onViewRoomDetails={handleViewRoomDetails}
             onDeleteTenant={handleDeleteTenant}
+            onEditRoom={handleEditRoom}
+            onDeleteRoom={handleDeleteRoom}
+            onClearTestData={handleClearTestData}
           />
         )}
 

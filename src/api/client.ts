@@ -1,5 +1,6 @@
 import {
   Room,
+  RoomStatus,
   Payment,
   StatementItem,
   PropertySettings,
@@ -10,20 +11,20 @@ import {
   YearlyMonthSummary,
 } from './types.ts';
 
-// Initial Mock Seed Data matching the screenshots faithfully
+// Clean Initial Setup - No dummy test data or sample people
 const INITIAL_SETTINGS: PropertySettings = {
-  propertyName: 'Dela Cruz Apartelle',
-  landlordName: 'Rodrigo Dela Cruz',
-  address: '123 Mabini St., Quezon City, Metro Manila',
+  propertyName: 'Balai Rental Properties',
+  landlordName: 'Property Admin',
+  address: 'Metro Manila, Philippines',
   electricityRate: 11.5,
   waterRate: 85,
-  monthlyWaterPumpFee: 1400, // Total monthly water pump cost distributed across occupied rooms
-  fixedPropertyOverhead: 4500, // Fixed Property Rent / Overhead (₱) e.g., ₱4,500
-  commonAreaMaintenance: 1500, // Common Area Maintenance (₱) e.g., ₱1,500
-  monthlyOperatingExpense: 12000, // Monthly property upkeep & operational expenses
+  monthlyWaterPumpFee: 1400,
+  fixedPropertyOverhead: 0,
+  commonAreaMaintenance: 0,
+  monthlyOperatingExpense: 0,
   version: '1.0.0',
-  totalRooms: 8,
-  totalTenants: 7,
+  totalRooms: 6,
+  totalTenants: 0,
 };
 
 const INITIAL_ROOMS: Room[] = [
@@ -32,181 +33,103 @@ const INITIAL_ROOMS: Room[] = [
     roomNumber: 'Rm 1',
     floor: 1,
     monthlyRent: 6500,
-    status: 'Occupied',
-    tenant: {
-      id: 'tenant-1',
-      name: 'Ana Reyes',
-      phone: '0917-234-5678',
-      email: 'ana.reyes@gmail.com',
-      roomId: 'room-1',
-    },
+    status: 'Available',
+    tenant: undefined,
     meterReading: {
-      previousElectricity: 12495,
-      currentElectricity: 12661,
-      previousWater: 3248,
-      currentWater: 3265,
+      previousElectricity: 0,
+      currentElectricity: 0,
+      previousWater: 0,
+      currentWater: 0,
     },
-    billed: 9854,
-    collected: 8409,
-    balance: 1445,
-    paymentStatus: 'Partial',
+    billed: 0,
+    collected: 0,
+    balance: 0,
+    paymentStatus: 'Paid',
   },
   {
     id: 'room-2',
     roomNumber: 'Rm 2',
     floor: 1,
     monthlyRent: 6500,
-    status: 'Occupied',
-    tenant: {
-      id: 'tenant-2',
-      name: 'Carlo Mendoza',
-      phone: '0919-876-5432',
-      email: 'c.mendoza@yahoo.com',
-      roomId: 'room-2',
-    },
+    status: 'Available',
+    tenant: undefined,
     meterReading: {
-      previousElectricity: 8912,
-      currentElectricity: 9104,
-      previousWater: 2153,
-      currentWater: 2174,
+      previousElectricity: 0,
+      currentElectricity: 0,
+      previousWater: 0,
+      currentWater: 0,
     },
-    billed: 10493,
-    collected: 6500,
-    balance: 3993,
-    paymentStatus: 'Partial',
+    billed: 0,
+    collected: 0,
+    balance: 0,
+    paymentStatus: 'Paid',
   },
   {
     id: 'room-3',
     roomNumber: 'Rm 3',
-    floor: 1,
-    monthlyRent: 9500,
-    status: 'Occupied',
-    tenant: {
-      id: 'tenant-3',
-      name: 'Maribel Santos',
-      phone: '0915-555-0101',
-      email: 'maribel.s@gmail.com',
-      roomId: 'room-3',
-    },
+    floor: 2,
+    monthlyRent: 7000,
+    status: 'Available',
+    tenant: undefined,
     meterReading: {
-      previousElectricity: 15100,
-      currentElectricity: 15324,
-      previousWater: 4100,
-      currentWater: 4125,
+      previousElectricity: 0,
+      currentElectricity: 0,
+      previousWater: 0,
+      currentWater: 0,
     },
-    billed: 14201,
-    collected: 12076,
-    balance: 2125,
-    paymentStatus: 'Partial',
+    billed: 0,
+    collected: 0,
+    balance: 0,
+    paymentStatus: 'Paid',
   },
   {
     id: 'room-4',
     roomNumber: 'Rm 4',
     floor: 2,
     monthlyRent: 7000,
-    status: 'Occupied',
-    tenant: {
-      id: 'tenant-4',
-      name: 'Jayson Flores',
-      phone: '0917-999-1234',
-      email: 'jflores@gmail.com',
-      roomId: 'room-4',
-    },
+    status: 'Available',
+    tenant: undefined,
     meterReading: {
-      previousElectricity: 6400,
-      currentElectricity: 6600,
-      previousWater: 1820,
-      currentWater: 1833.54,
+      previousElectricity: 0,
+      currentElectricity: 0,
+      previousWater: 0,
+      currentWater: 0,
     },
-    billed: 10451,
+    billed: 0,
     collected: 0,
-    balance: 10451,
-    paymentStatus: 'Unpaid',
+    balance: 0,
+    paymentStatus: 'Paid',
   },
   {
     id: 'room-5',
     roomNumber: 'Rm 5',
-    floor: 2,
-    monthlyRent: 10000,
-    status: 'Occupied',
-    tenant: {
-      id: 'tenant-5',
-      name: 'Rosalinda Cruz',
-      phone: '0918-444-3210',
-      email: 'rosa.cruz@gmail.com',
-      roomId: 'room-5',
-    },
+    floor: 3,
+    monthlyRent: 8000,
+    status: 'Available',
+    tenant: undefined,
     meterReading: {
-      previousElectricity: 18200,
-      currentElectricity: 18480,
-      previousWater: 5200,
-      currentWater: 5232.1,
+      previousElectricity: 0,
+      currentElectricity: 0,
+      previousWater: 0,
+      currentWater: 0,
     },
-    billed: 15949,
-    collected: 10000,
-    balance: 5949,
-    paymentStatus: 'Partial',
+    billed: 0,
+    collected: 0,
+    balance: 0,
+    paymentStatus: 'Paid',
   },
   {
     id: 'room-6',
     roomNumber: 'Rm 6',
-    floor: 2,
-    monthlyRent: 7000,
-    status: 'Occupied',
-    tenant: {
-      id: 'tenant-6',
-      name: 'Michael Tan',
-      phone: '0916-321-0987',
-      email: 'm.tan@email.com',
-      roomId: 'room-6',
-    },
-    meterReading: {
-      previousElectricity: 11200,
-      currentElectricity: 11384.1,
-      previousWater: 3100,
-      currentWater: 3121,
-    },
-    billed: 10901,
-    collected: 9117,
-    balance: 1784,
-    paymentStatus: 'Partial',
-  },
-  {
-    id: 'room-7',
-    roomNumber: 'Rm 7',
     floor: 3,
-    monthlyRent: 11000,
-    status: 'Occupied',
-    tenant: {
-      id: 'tenant-7',
-      name: 'Grace Villanueva',
-      phone: '0920-678-9012',
-      email: 'g.villanueva@gmail.com',
-      roomId: 'room-7',
-    },
-    meterReading: {
-      previousElectricity: 14000,
-      currentElectricity: 14265,
-      previousWater: 4200,
-      currentWater: 4231,
-    },
-    billed: 16683,
-    collected: 14047,
-    balance: 2636,
-    paymentStatus: 'Partial',
-  },
-  {
-    id: 'room-8',
-    roomNumber: 'Rm 8',
-    floor: 3,
-    monthlyRent: 7500,
+    monthlyRent: 8000,
     status: 'Available',
     tenant: undefined,
     meterReading: {
-      previousElectricity: 5000,
-      currentElectricity: 5000,
-      previousWater: 1500,
-      currentWater: 1500,
+      previousElectricity: 0,
+      currentElectricity: 0,
+      previousWater: 0,
+      currentWater: 0,
     },
     billed: 0,
     collected: 0,
@@ -215,129 +138,9 @@ const INITIAL_ROOMS: Room[] = [
   },
 ];
 
-const INITIAL_PAYMENTS: Payment[] = [
-  {
-    id: 'pay-1',
-    roomId: 'room-5',
-    roomNumber: 'Rm 5',
-    tenantName: 'Rosalinda Cruz',
-    date: 'Aug 8, 2026',
-    type: 'Rent',
-    amount: 10000,
-    method: 'GCash',
-    reference: 'GC-0808-001',
-  },
-  {
-    id: 'pay-2',
-    roomId: 'room-2',
-    roomNumber: 'Rm 2',
-    tenantName: 'Carlo Mendoza',
-    date: 'Aug 5, 2026',
-    type: 'Rent',
-    amount: 6500,
-    method: 'Cash',
-    reference: '—',
-  },
-  {
-    id: 'pay-3',
-    roomId: 'room-6',
-    roomNumber: 'Rm 6',
-    tenantName: 'Michael Tan',
-    date: 'Aug 4, 2026',
-    type: 'Rent',
-    amount: 7000,
-    method: 'Cash',
-    reference: '—',
-  },
-  {
-    id: 'pay-4',
-    roomId: 'room-6',
-    roomNumber: 'Rm 6',
-    tenantName: 'Michael Tan',
-    date: 'Aug 4, 2026',
-    type: 'Electricity',
-    amount: 2117,
-    method: 'Cash',
-    reference: '—',
-  },
-  {
-    id: 'pay-5',
-    roomId: 'room-3',
-    roomNumber: 'Rm 3',
-    tenantName: 'Maribel Santos',
-    date: 'Aug 3, 2026',
-    type: 'Rent',
-    amount: 9500,
-    method: 'Bank Transfer',
-    reference: 'BDO-0803-01',
-  },
-  {
-    id: 'pay-6',
-    roomId: 'room-3',
-    roomNumber: 'Rm 3',
-    tenantName: 'Maribel Santos',
-    date: 'Aug 3, 2026',
-    type: 'Electricity',
-    amount: 2576,
-    method: 'Bank Transfer',
-    reference: 'BDO-0803-02',
-  },
-  {
-    id: 'pay-7',
-    roomId: 'room-1',
-    roomNumber: 'Rm 1',
-    tenantName: 'Ana Reyes',
-    date: 'Aug 2, 2026',
-    type: 'Rent',
-    amount: 6500,
-    method: 'GCash',
-    reference: 'GC-0802-001',
-  },
-  {
-    id: 'pay-8',
-    roomId: 'room-1',
-    roomNumber: 'Rm 1',
-    tenantName: 'Ana Reyes',
-    date: 'Aug 2, 2026',
-    type: 'Electricity',
-    amount: 1909,
-    method: 'GCash',
-    reference: 'GC-0802-002',
-  },
-  {
-    id: 'pay-9',
-    roomId: 'room-7',
-    roomNumber: 'Rm 7',
-    tenantName: 'Grace Villanueva',
-    date: 'Aug 1, 2026',
-    type: 'Rent',
-    amount: 11000,
-    method: 'Bank Transfer',
-    reference: 'BPI-0801-01',
-  },
-  {
-    id: 'pay-10',
-    roomId: 'room-7',
-    roomNumber: 'Rm 7',
-    tenantName: 'Grace Villanueva',
-    date: 'Aug 1, 2026',
-    type: 'Electricity',
-    amount: 3047,
-    method: 'Bank Transfer',
-    reference: 'BPI-0801-02',
-  },
-];
+const INITIAL_PAYMENTS: Payment[] = [];
 
-const INITIAL_TRENDS: MonthlyTrendData[] = [
-  { month: 'Jan', billed: 57500, collected: 45000, outstanding: 12500 },
-  { month: 'Feb', billed: 57500, collected: 48000, outstanding: 9500 },
-  { month: 'Mar', billed: 57500, collected: 52000, outstanding: 5500 },
-  { month: 'Apr', billed: 57500, collected: 50000, outstanding: 7500 },
-  { month: 'May', billed: 57500, collected: 54000, outstanding: 3500 },
-  { month: 'Jun', billed: 85000, collected: 72000, outstanding: 13000 },
-  { month: 'Jul', billed: 87200, collected: 73500, outstanding: 13700 },
-  { month: 'Aug', billed: 88532, collected: 60149, outstanding: 28383 },
-];
+const INITIAL_TRENDS: MonthlyTrendData[] = [];
 
 interface MonthStore {
   [monthKey: string]: {
@@ -413,29 +216,49 @@ class ApiService {
 
   private loadFromStorage() {
     try {
-      const storedMonths = localStorage.getItem('rental_ledger_months_v3');
-      const storedMonthList = localStorage.getItem('rental_ledger_month_list_v3');
-      const storedActiveMonth = localStorage.getItem('rental_ledger_active_month_v3');
+      const storedMonths = localStorage.getItem('rental_ledger_months_v4') || localStorage.getItem('rental_ledger_months_v3');
+      const storedMonthList = localStorage.getItem('rental_ledger_month_list_v4') || localStorage.getItem('rental_ledger_month_list_v3');
+      const storedActiveMonth = localStorage.getItem('rental_ledger_active_month_v4') || localStorage.getItem('rental_ledger_active_month_v3');
       const storedSettings = localStorage.getItem('rental_ledger_settings');
 
       if (storedMonths) {
         this.months = JSON.parse(storedMonths);
-      } else {
-        // Migration from previous single-month storage if available
-        const singleRooms = localStorage.getItem('rental_ledger_rooms');
-        const singlePayments = localStorage.getItem('rental_ledger_payments');
-        if (singleRooms) {
-          try {
-            const parsed = JSON.parse(singleRooms);
-            const parsedPayments = singlePayments ? JSON.parse(singlePayments) : INITIAL_PAYMENTS;
-            this.months['Aug 2026'] = {
-              rooms: Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_ROOMS,
-              payments: Array.isArray(parsedPayments) ? parsedPayments : INITIAL_PAYMENTS,
-            };
-          } catch {
-            this.months['Aug 2026'] = { rooms: INITIAL_ROOMS, payments: INITIAL_PAYMENTS };
-          }
+
+        // Automatically detect and purge any legacy dummy test people (Ana Reyes, Carlo Mendoza, etc.)
+        const hasDummyTestPeople = Object.values(this.months).some((m) =>
+          m.rooms.some((r) =>
+            r.tenant?.name === 'Ana Reyes' ||
+            r.tenant?.name === 'Carlo Mendoza' ||
+            r.tenant?.name === 'Maribel Santos' ||
+            r.tenant?.name === 'Rosalinda Cruz' ||
+            r.tenant?.name === 'Jayson Flores' ||
+            r.tenant?.name === 'Michael Tan' ||
+            r.tenant?.name === 'Grace Villanueva'
+          )
+        );
+
+        if (hasDummyTestPeople) {
+          Object.keys(this.months).forEach((mKey) => {
+            this.months[mKey].payments = [];
+            this.months[mKey].rooms = this.months[mKey].rooms.map((r) => ({
+              ...r,
+              tenant: undefined,
+              status: 'Available' as RoomStatus,
+              billed: 0,
+              collected: 0,
+              balance: 0,
+              paymentStatus: 'Paid',
+              meterReading: {
+                previousElectricity: 0,
+                currentElectricity: 0,
+                previousWater: 0,
+                currentWater: 0,
+              },
+            }));
+          });
         }
+      } else {
+        this.months = { 'Aug 2026': { rooms: INITIAL_ROOMS, payments: INITIAL_PAYMENTS } };
       }
 
       if (storedMonthList) {
@@ -458,9 +281,9 @@ class ApiService {
 
   private saveToStorage() {
     try {
-      localStorage.setItem('rental_ledger_months_v3', JSON.stringify(this.months));
-      localStorage.setItem('rental_ledger_month_list_v3', JSON.stringify(this.monthList));
-      localStorage.setItem('rental_ledger_active_month_v3', this.activeMonth);
+      localStorage.setItem('rental_ledger_months_v4', JSON.stringify(this.months));
+      localStorage.setItem('rental_ledger_month_list_v4', JSON.stringify(this.monthList));
+      localStorage.setItem('rental_ledger_active_month_v4', this.activeMonth);
       localStorage.setItem('rental_ledger_settings', JSON.stringify(this.settings));
     } catch {
       // Ignore
@@ -753,9 +576,68 @@ class ApiService {
     return newRoom;
   }
 
+  public async updateRoom(
+    roomId: string,
+    updates: {
+      roomNumber?: string;
+      floor?: number;
+      monthlyRent?: number;
+      status?: RoomStatus;
+    }
+  ): Promise<Room> {
+    const room = this.currentRooms.find((r) => r.id === roomId);
+    if (!room) throw new Error('Room not found');
+
+    if (updates.roomNumber !== undefined) room.roomNumber = updates.roomNumber;
+    if (updates.floor !== undefined) room.floor = Number(updates.floor);
+    if (updates.monthlyRent !== undefined) room.monthlyRent = Number(updates.monthlyRent);
+    if (updates.status !== undefined) room.status = updates.status;
+
+    // Propagate changes to other months so property layout stays consistent
+    Object.keys(this.months).forEach((mKey) => {
+      const target = this.months[mKey].rooms.find((r) => r.id === roomId);
+      if (target) {
+        if (updates.roomNumber !== undefined) target.roomNumber = updates.roomNumber;
+        if (updates.floor !== undefined) target.floor = Number(updates.floor);
+        if (updates.monthlyRent !== undefined) target.monthlyRent = Number(updates.monthlyRent);
+      }
+    });
+
+    this.recalculate();
+    return { ...room };
+  }
+
   public async deleteRoom(roomId: string): Promise<void> {
-    this.currentRooms = this.currentRooms.filter((r) => r.id !== roomId);
-    this.currentPayments = this.currentPayments.filter((p) => p.roomId !== roomId);
+    // Remove from active month and all stored months
+    Object.keys(this.months).forEach((mKey) => {
+      this.months[mKey].rooms = this.months[mKey].rooms.filter((r) => r.id !== roomId);
+      this.months[mKey].payments = this.months[mKey].payments.filter((p) => p.roomId !== roomId);
+    });
+    this.settings.totalRooms = this.currentRooms.length;
+    this.recalculate();
+  }
+
+  public async clearTestData(): Promise<void> {
+    // Purge all dummy tenants, test payments, and reset balances
+    Object.keys(this.months).forEach((mKey) => {
+      this.months[mKey].payments = [];
+      this.months[mKey].rooms.forEach((room) => {
+        room.tenant = undefined;
+        room.status = 'Available';
+        room.billed = 0;
+        room.collected = 0;
+        room.balance = 0;
+        room.paymentStatus = 'Paid';
+        room.meterReading = {
+          previousElectricity: 0,
+          currentElectricity: 0,
+          previousWater: 0,
+          currentWater: 0,
+        };
+      });
+    });
+    this.settings.totalTenants = 0;
+    this.saveToStorage();
     this.recalculate();
   }
 

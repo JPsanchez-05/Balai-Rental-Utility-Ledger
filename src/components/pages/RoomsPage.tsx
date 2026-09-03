@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Header } from '../layout/Header.tsx';
 import { StatusBadge } from '../common/StatusBadge.tsx';
 import { Modal } from '../common/Modal.tsx';
+import { EditRoomModal } from '../modals/EditRoomModal.tsx';
 import { Room, RoomStatus } from '../../api/types.ts';
-import { Plus, Search, ArrowRight, UserMinus, UserPlus, AlertTriangle } from 'lucide-react';
+import { Plus, Search, ArrowRight, UserMinus, UserPlus, AlertTriangle, Edit2, Trash2 } from 'lucide-react';
 
 interface RoomsPageProps {
   rooms: Room[];
@@ -12,6 +13,12 @@ interface RoomsPageProps {
   onOpenAddTenant?: () => void;
   onViewRoomDetails: (room: Room) => void;
   onDeleteTenant?: (roomId: string) => void;
+  onEditRoom?: (
+    roomId: string,
+    updates: { roomNumber: string; floor: number; monthlyRent: number; status?: RoomStatus }
+  ) => void;
+  onDeleteRoom?: (roomId: string) => void;
+  onClearTestData?: () => void;
 }
 
 export const RoomsPage: React.FC<RoomsPageProps> = ({
@@ -21,10 +28,16 @@ export const RoomsPage: React.FC<RoomsPageProps> = ({
   onOpenAddTenant,
   onViewRoomDetails,
   onDeleteTenant,
+  onEditRoom,
+  onDeleteRoom,
+  onClearTestData,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | RoomStatus>('All');
   const [tenantToDelete, setTenantToDelete] = useState<Room | null>(null);
+  const [roomToEdit, setRoomToEdit] = useState<Room | null>(null);
+  const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const filteredRooms = rooms.filter((room) => {
     const matchesSearch =
@@ -52,7 +65,19 @@ export const RoomsPage: React.FC<RoomsPageProps> = ({
         subtitle="All rooms and their current occupancy status"
         showMonthSelector={false}
         actions={
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {onClearTestData && (
+              <button
+                id="rooms-btn-clear-test-data"
+                type="button"
+                onClick={() => setShowClearConfirm(true)}
+                title="Clear all test data and dummy people"
+                className="btn-outline text-xs font-semibold text-[#64748B] hover:text-[#DC2626] hover:border-[#FECDD3] hover:bg-[#FFF1F2] transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Clear Test Data</span>
+              </button>
+            )}
             {onOpenAddTenant && (
               <button
                 id="rooms-btn-add-tenant"
@@ -189,7 +214,22 @@ export const RoomsPage: React.FC<RoomsPageProps> = ({
 
                     {/* Actions */}
                     <td className="text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                        {/* Edit Room */}
+                        {onEditRoom && (
+                          <button
+                            id={`edit-room-btn-${room.id}`}
+                            type="button"
+                            onClick={() => setRoomToEdit(room)}
+                            title="Edit room rent, floor, or room number"
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-[#2563EB] hover:text-[#1D4ED8] px-2 py-1 rounded hover:bg-[#EFF6FF] transition-colors"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span>Edit</span>
+                          </button>
+                        )}
+
+                        {/* View Room Statement */}
                         <button
                           type="button"
                           onClick={() => onViewRoomDetails(room)}
@@ -199,6 +239,7 @@ export const RoomsPage: React.FC<RoomsPageProps> = ({
                           <ArrowRight className="w-3.5 h-3.5" />
                         </button>
 
+                        {/* Tenant Management: Remove or Assign */}
                         {isOccupied && room.tenant && onDeleteTenant && (
                           <button
                             type="button"
@@ -215,10 +256,24 @@ export const RoomsPage: React.FC<RoomsPageProps> = ({
                           <button
                             type="button"
                             onClick={onOpenAddTenant}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-[#2563EB] hover:text-[#1D4ED8] px-2 py-1 rounded hover:bg-[#EFF6FF] transition-colors"
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-[#059669] hover:text-[#047857] px-2 py-1 rounded hover:bg-[#ECFDF5] transition-colors"
                           >
                             <UserPlus className="w-3.5 h-3.5" />
                             <span>Assign</span>
+                          </button>
+                        )}
+
+                        {/* Delete Room */}
+                        {onDeleteRoom && (
+                          <button
+                            id={`delete-room-btn-${room.id}`}
+                            type="button"
+                            onClick={() => setRoomToDelete(room)}
+                            title="Delete Room Unit"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-[#94A3B8] hover:text-[#E11D48] px-2 py-1 rounded hover:bg-[#FFF1F2] transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete</span>
                           </button>
                         )}
                       </div>
@@ -237,6 +292,125 @@ export const RoomsPage: React.FC<RoomsPageProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Edit Room Modal */}
+      {roomToEdit && (
+        <EditRoomModal
+          isOpen={true}
+          onClose={() => setRoomToEdit(null)}
+          room={roomToEdit}
+          onRoomUpdated={async (updatedData) => {
+            if (onEditRoom && roomToEdit) {
+              await onEditRoom(roomToEdit.id, updatedData);
+              setRoomToEdit(null);
+            }
+          }}
+        />
+      )}
+
+      {/* Delete Room Confirmation Modal */}
+      {roomToDelete && (
+        <Modal
+          isOpen={true}
+          onClose={() => setRoomToDelete(null)}
+          title="Delete Room"
+          subtitle={`Confirmation for ${roomToDelete.roomNumber}`}
+          maxWidth="max-w-md"
+        >
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 p-3.5 bg-[#FFF1F2] border border-[#FECDD3] rounded-xl text-xs text-[#9F1239]">
+              <AlertTriangle className="w-5 h-5 text-[#E11D48] shrink-0 mt-0.5" />
+              <div className="space-y-1.5">
+                <p className="font-bold text-[#BE123C]">
+                  Are you sure you want to permanently delete {roomToDelete.roomNumber}?
+                </p>
+                <p className="text-[#881337]">
+                  Floor Level: <strong>{roomToDelete.floor}</strong> &bull; Monthly Rent: <strong>₱{roomToDelete.monthlyRent.toLocaleString()}</strong>
+                </p>
+                {roomToDelete.tenant ? (
+                  <div className="p-2.5 bg-white/80 rounded-lg border border-[#FECDD3] text-[#881337]">
+                    <p className="font-semibold text-xs">Active Tenant Warning:</p>
+                    <p className="mt-0.5">
+                      This unit currently has tenant <strong>{roomToDelete.tenant.name}</strong>. Deleting this room will remove the unit and all associated ledger records.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-[#64748B]">This unit is vacant and will be removed from your active property list.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#E2E8F0]">
+              <button
+                type="button"
+                onClick={() => setRoomToDelete(null)}
+                className="btn-outline text-xs font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onDeleteRoom && roomToDelete) {
+                    onDeleteRoom(roomToDelete.id);
+                    setRoomToDelete(null);
+                  }
+                }}
+                className="bg-[#E11D48] hover:bg-[#BE123C] text-white px-4 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Room</span>
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Clear Test Data Confirmation Modal */}
+      {showClearConfirm && (
+        <Modal
+          isOpen={true}
+          onClose={() => setShowClearConfirm(false)}
+          title="Clear Test Data"
+          subtitle="Clean up dummy people and mock records"
+          maxWidth="max-w-md"
+        >
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 p-3.5 bg-[#FEF3C7] border border-[#FDE68A] rounded-xl text-xs text-[#92400E]">
+              <AlertTriangle className="w-5 h-5 text-[#D97706] shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-[#B45309] mb-1">Clear all sample and test data?</p>
+                <p>
+                  This will reset all rooms to Available, remove any dummy tenants or mock records, and clear test payment histories.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#E2E8F0]">
+              <button
+                type="button"
+                onClick={() => setShowClearConfirm(false)}
+                className="btn-outline text-xs font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onClearTestData) {
+                    onClearTestData();
+                    setShowClearConfirm(false);
+                  }
+                }}
+                className="bg-[#D97706] hover:bg-[#B45309] text-white px-4 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Reset & Clear</span>
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Delete Tenant Confirmation Modal */}
       {tenantToDelete && (

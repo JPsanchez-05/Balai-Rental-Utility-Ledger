@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal } from '../common/Modal.tsx';
 import { RoomStatus } from '../../api/types.ts';
+import { Building2 } from 'lucide-react';
 
 interface AddRoomModalProps {
   isOpen: boolean;
@@ -68,15 +69,31 @@ export const AddRoomModal: React.FC<AddRoomModalProps> = ({
             <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-1.5">
               Floor Level
             </label>
-            <input
-              type="number"
-              value={floor}
-              onChange={(e) => setFloor(Number(e.target.value))}
-              min="1"
-              max="30"
-              className="rl-input"
-              required
-            />
+            <div className="relative">
+              <select
+                id="add-room-floor-select"
+                value={floor}
+                onChange={(e) => setFloor(Number(e.target.value))}
+                className="rl-input font-medium bg-white appearance-none cursor-pointer pr-8"
+                required
+              >
+                <option value={1}>1st Floor</option>
+                <option value={2}>2nd Floor</option>
+                <option value={3}>3rd Floor</option>
+                <option value={4}>4th Floor</option>
+                <option value={5}>5th Floor</option>
+                <option value={6}>6th Floor</option>
+                <option value={7}>7th Floor</option>
+                <option value={8}>8th Floor</option>
+                <option value={9}>9th Floor</option>
+                <option value={10}>10th Floor</option>
+                <option value={0}>Ground Floor</option>
+                <option value={-1}>Basement</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-[#64748B]">
+                <Building2 className="w-4 h-4" />
+              </div>
+            </div>
           </div>
         </div>
 
