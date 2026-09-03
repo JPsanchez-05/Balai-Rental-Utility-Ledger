@@ -36,7 +36,7 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
           id="month-selector-dropdown"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="month-select pr-8 appearance-none bg-white font-medium text-xs md:text-[13px] text-[#0F172A] border border-[#E2E8F0] rounded-lg py-2 px-3 focus:outline-none focus:border-[#2563eb] shadow-2xs cursor-pointer hover:border-slate-300 transition-colors"
+          className="month-select pr-8 bg-white font-medium text-xs md:text-[13px] text-[#0F172A] border border-[#E2E8F0] rounded-lg py-2 px-3 focus:outline-none focus:border-[#2563eb] shadow-2xs cursor-pointer hover:border-slate-300 transition-colors"
         >
           {displayMonths.map((m) => (
             <option key={m} value={m}>
@@ -44,7 +44,6 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
             </option>
           ))}
         </select>
-        <ChevronDown className="w-3.5 h-3.5 text-[#64748B] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
       </div>
 
       {onOpenAddMonth && (

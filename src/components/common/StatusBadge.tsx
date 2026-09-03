@@ -22,10 +22,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
       badgeStyle = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
       break;
     case 'Partial':
-      badgeStyle = 'bg-amber-50 text-amber-700 border border-amber-200';
-      break;
     case 'Unpaid':
-      badgeStyle = 'bg-rose-50 text-rose-700 border border-rose-200';
+      badgeStyle = 'bg-rose-50 text-rose-700 border border-rose-200 font-bold';
       break;
   }
 

@@ -70,6 +70,7 @@ export interface StatementItem {
   totalPaid: number;
   balance: number;
   status: PaymentStatus;
+  dueDate: string;
   meterReadings: {
     prevElec: number;
     currElec: number;

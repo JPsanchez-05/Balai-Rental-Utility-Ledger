@@ -60,6 +60,7 @@ export const StatementsPage: React.FC<StatementsPageProps> = ({
                 <th>PAID</th>
                 <th>BALANCE</th>
                 <th>STATUS</th>
+                <th>DUE DATE</th>
                 <th className="text-right">ACTION</th>
               </tr>
             </thead>
@@ -100,6 +101,11 @@ export const StatementsPage: React.FC<StatementsPageProps> = ({
                     <StatusBadge status={stmt.status} />
                   </td>
 
+                  {/* Due Date */}
+                  <td className="text-xs font-medium text-[#4A5568]">
+                    {stmt.dueDate || '7th of month'}
+                  </td>
+
                   {/* Action */}
                   <td className="text-right">
                     <button
@@ -115,7 +121,7 @@ export const StatementsPage: React.FC<StatementsPageProps> = ({
               ))}
               {filteredStatements.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center py-10 text-[#94A3B8]">
+                  <td colSpan={8} className="text-center py-10 text-[#94A3B8]">
                     No statements found matching your search.
                   </td>
                 </tr>

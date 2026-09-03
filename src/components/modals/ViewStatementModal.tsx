@@ -34,7 +34,7 @@ export const ViewStatementModal: React.FC<ViewStatementModalProps> = ({
       maxWidth="max-w-2xl"
     >
       <div className="space-y-6 text-sm text-[#2D3748]">
-        {/* Header Property & Tenant Grid */}
+        {/* Header Property & Tenant Grid with Due Date */}
         <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-[#F8F9FD] border border-[#EDF2F7]">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-wider text-[#718096]">
@@ -51,6 +51,9 @@ export const ViewStatementModal: React.FC<ViewStatementModalProps> = ({
             <div className="font-bold text-[#1A202C] mt-0.5">{statement.tenantName}</div>
             <div className="text-xs text-[#4A5568]">{statement.roomNumber} • Floor {statement.floor}</div>
             <div className="text-xs text-[#718096]">{statement.tenantPhone} • {statement.tenantEmail}</div>
+            <div className="mt-2 text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 inline-block">
+              Due Date: {statement.dueDate || '7th of month'}
+            </div>
           </div>
         </div>
 

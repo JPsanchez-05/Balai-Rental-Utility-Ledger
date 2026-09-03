@@ -282,7 +282,7 @@ export default function App() {
           currentPage={currentPage}
           onSelectPage={handleNavigate}
           propertyName={settings.propertyName}
-          propertyCity={settings.address.split(',')[1]?.trim() || 'Quezon City'}
+          propertyCity={settings.address}
         />
       </aside>
 
@@ -298,7 +298,7 @@ export default function App() {
               currentPage={currentPage}
               onSelectPage={handleNavigate}
               propertyName={settings.propertyName}
-              propertyCity={settings.address.split(',')[1]?.trim() || 'Quezon City'}
+              propertyCity={settings.address}
             />
           </div>
         </div>

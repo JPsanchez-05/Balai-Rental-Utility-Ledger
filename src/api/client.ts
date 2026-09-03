@@ -533,8 +533,14 @@ class ApiService {
     }
     this.activeMonth = monthKey;
     if (!this.months[monthKey]) {
+      const cleanRooms = JSON.parse(JSON.stringify(INITIAL_ROOMS)).map((r: Room) => ({
+        ...r,
+        collected: 0,
+        balance: r.status === 'Occupied' ? r.monthlyRent : 0,
+        paymentStatus: r.status === 'Occupied' ? 'Unpaid' : 'Paid',
+      }));
       this.months[monthKey] = {
-        rooms: JSON.parse(JSON.stringify(INITIAL_ROOMS)),
+        rooms: cleanRooms,
         payments: [],
       };
     }
@@ -655,17 +661,17 @@ class ApiService {
       .filter((p) => p.type === 'Water Pump Fee')
       .reduce((sum, p) => sum + p.amount, 0);
 
-    // Formula: Net Profit/Loss = Total Occupancy Revenue - (Fixed Property Rent + Total Utility Expenses)
-    // Total Occupancy Revenue: (Occupied Rooms × Rent per Room) + Utility Surcharges Collected
-    const totalOccupancyRevenue = totalRentBilled + totalUtilitiesBilled + totalWaterPumpBilled;
+    // Formula: Net Profit/Loss = Total Rental Revenue (Rent) - Property Operating Expenses (Fixed Overhead + CAM)
+    // Utility bills are tenant pass-through reimbursements and do not count as landlord rental revenue or profit.
+    const totalOccupancyRevenue = totalRentBilled;
     
-    // Total Utility Expenses: Electricity + Water + Pump Fee + Common Area Maintenance
+    // Total Utility Expenses & Property Operating Expenses
     const fixedPropertyOverhead = this.settings.fixedPropertyOverhead ?? 4500;
     const commonAreaMaintenance = this.settings.commonAreaMaintenance ?? 1500;
     const totalUtilityExpenses = totalUtilitiesBilled + (this.settings.monthlyWaterPumpFee || 0) + commonAreaMaintenance;
     
-    // Total Monthly Operating Expenses: Fixed Property Overhead + Total Utility Expenses
-    const operatingExpenses = fixedPropertyOverhead + totalUtilityExpenses;
+    // Total Monthly Operating Expenses: Fixed Property Overhead + Common Area Maintenance (Utilities are tenant pass-through)
+    const operatingExpenses = fixedPropertyOverhead + commonAreaMaintenance;
     
     // Net Monthly Surplus / Deficit & Margin
     const netSurplusDeficit = totalOccupancyRevenue - operatingExpenses;
@@ -832,6 +838,7 @@ class ApiService {
           totalPaid: r.collected,
           balance: r.balance,
           status: r.paymentStatus,
+          dueDate: `7th of ${this.activeMonth || 'Sep 2026'}`,
           meterReadings: {
             prevElec: r.meterReading.previousElectricity,
             currElec: r.meterReading.currentElectricity,
@@ -877,8 +884,15 @@ class ApiService {
     let annualRentPaid = 0;
     let annualElectricity = 0;
     let annualWaterAndPump = 0;
+    let annualOccupancyRevenue = 0;
+    let annualUtilityExpenses = 0;
+    let annualFixedOverhead = 0;
+    let annualOpEx = 0;
     let totalOccupancyPercent = 0;
     let recordedMonthsCount = 0;
+
+    const currentMonthName = this.activeMonth ? this.activeMonth.split(' ')[0] : 'Aug';
+    const currentMonthIdx = Math.max(7, monthsNames.indexOf(currentMonthName));
 
     for (const mName of monthsNames) {
       const monthKey = `${mName} ${year}`;
@@ -910,11 +924,11 @@ class ApiService {
           return sum + Math.round(usage * this.settings.waterRate) + (r.waterPumpFeeShare || 0);
         }, 0);
 
-        const mOccupancyRevenue = mBilled;
+        const mOccupancyRevenue = mRent;
         const mFixedOverhead = this.settings.fixedPropertyOverhead ?? 4500;
         const mCAM = this.settings.commonAreaMaintenance ?? 1500;
         const mUtilityExpenses = mElec + mWaterPump + mCAM;
-        const mOpEx = mFixedOverhead + mUtilityExpenses;
+        const mOpEx = mFixedOverhead + mCAM;
         const mSurplusDeficit = mOccupancyRevenue - mOpEx;
         const isNetProfit = mSurplusDeficit >= 0;
         const netProfit = mSurplusDeficit > 0 ? mSurplusDeficit : 0;
@@ -962,13 +976,13 @@ class ApiService {
         // Historical / standard model for months without separate manual entry yet
         const trendMatch = this.trends.find((t) => t.month === mName);
         const mBilled = trendMatch ? trendMatch.billed : 57500;
-        const mCollected = trendMatch ? trendMatch.collected : (monthsNames.indexOf(mName) <= 7 ? 50000 : 0);
+        const mCollected = trendMatch ? trendMatch.collected : (monthsNames.indexOf(mName) <= currentMonthIdx ? 50000 : 0);
         const mRent = 57500;
         const mRentPaid = Math.min(mRent, mCollected);
         const mElec = mBilled > mRent ? Math.round((mBilled - mRent) * 0.55) : 0;
         const mWaterPump = mBilled > mRent ? (mBilled - mRent - mElec) : 0;
 
-        const isPastOrCurrent = monthsNames.indexOf(mName) <= 7;
+        const isPastOrCurrent = monthsNames.indexOf(mName) <= currentMonthIdx;
         const mOccupancyRevenue = isPastOrCurrent ? mBilled : 0;
         const mFixedOverhead = isPastOrCurrent ? (this.settings.fixedPropertyOverhead ?? 4500) : 0;
         const mCAM = isPastOrCurrent ? (this.settings.commonAreaMaintenance ?? 1500) : 0;
@@ -1064,6 +1078,7 @@ class ApiService {
       ...newSettings,
     };
     this.recalculate();
+    this.saveToStorage();
     return { ...this.settings };
   }
 

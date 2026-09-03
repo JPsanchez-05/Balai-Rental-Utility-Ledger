@@ -33,9 +33,9 @@ export const RevenueBreakdownChart: React.FC<RevenueBreakdownProps> = ({
   const waterPumpOffset = -(rentStroke + elecStroke);
 
   return (
-    <div className="w-full flex flex-col md:flex-row items-center justify-around gap-4 py-2">
+    <div className="w-full flex flex-col items-center justify-center gap-6 py-3 px-2">
       {/* Donut Chart */}
-      <div className="relative w-40 h-40 flex items-center justify-center shrink-0">
+      <div className="relative w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center shrink-0">
         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
           {/* Rent Segment (Primary Blue) */}
           {rent > 0 && (
@@ -88,33 +88,33 @@ export const RevenueBreakdownChart: React.FC<RevenueBreakdownProps> = ({
       </div>
 
       {/* Breakdown Legend with Currency Values */}
-      <div className="flex flex-col gap-3 min-w-[200px]">
-        <div className="flex items-center justify-between gap-4 text-xs">
+      <div className="w-full max-w-xs flex flex-col gap-2.5 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+        <div className="flex items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB] shrink-0"></span>
             <span className="text-[#475569] font-medium">Rent</span>
           </div>
-          <span className="font-bold text-[#0F172A]">
+          <span className="font-bold text-[#0F172A] font-mono">
             ₱{(rent ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </span>
         </div>
 
-        <div className="flex items-center justify-between gap-4 text-xs">
+        <div className="flex items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] shrink-0"></span>
             <span className="text-[#475569] font-medium">Electricity</span>
           </div>
-          <span className="font-bold text-[#0F172A]">
+          <span className="font-bold text-[#0F172A] font-mono">
             ₱{(electricity ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </span>
         </div>
 
-        <div className="flex items-center justify-between gap-4 text-xs">
+        <div className="flex items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#06B6D4] shrink-0"></span>
             <span className="text-[#475569] font-medium">Water + Pump Fee</span>
           </div>
-          <span className="font-bold text-[#0F172A]">
+          <span className="font-bold text-[#0F172A] font-mono">
             ₱{(combinedWaterAndPump ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </span>
         </div>
