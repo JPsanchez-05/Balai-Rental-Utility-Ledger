@@ -263,9 +263,9 @@ export default function App() {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[#0F172A] text-white px-4 py-3 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-[#2563eb] flex items-center justify-center text-white">
-            <span className="font-bold text-xs">RL</span>
+            <span className="font-bold text-xs">BL</span>
           </div>
-          <span className="font-bold text-sm">Rental Ledger</span>
+          <span className="font-bold text-sm">Balai</span>
         </div>
         <button
           type="button"

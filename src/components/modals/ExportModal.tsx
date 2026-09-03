@@ -23,8 +23,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     setTimeout(() => {
       setIsExporting(false);
       // Trigger dummy download
-      const filename = `Rental_Ledger_Report_${month.replace(' ', '_')}.${format}`;
-      const blob = new Blob([`Report for ${month} generated from Rental Ledger`], { type: 'text/plain' });
+      const filename = `Balai_Report_${month.replace(' ', '_')}.${format}`;
+      const blob = new Blob([`Report for ${month} generated from Balai Rental Utility`], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

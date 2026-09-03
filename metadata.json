@@ -1,6 +1,6 @@
 {
-  "name": "Rental Ledger",
-  "description": "Property management frontend with ledger tracking, meter readings, payments, statements, and reports.",
+  "name": "Balai",
+  "description": "Balai Rental Utility and property management system with ledger tracking, meter readings, payments, statements, and reports.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

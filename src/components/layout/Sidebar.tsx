@@ -51,8 +51,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <Home className="w-4 h-4 fill-white text-white" />
           </div>
           <div>
-            <h1 className="brand-title text-base font-bold text-white leading-tight">Rental Ledger</h1>
-            <p className="text-[11px] text-[#94a3b8] font-medium">Property Manager</p>
+            <h1 className="brand-title text-base font-bold text-white leading-tight">Balai</h1>
+            <p className="text-[11px] text-[#94a3b8] font-medium">Rental Utility</p>
           </div>
         </div>
 
