@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: balai-rental-app
+    env: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
