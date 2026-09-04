@@ -12,28 +12,19 @@ interface CollectionTrendChartProps {
 }
 
 export const CollectionTrendChart: React.FC<CollectionTrendChartProps> = ({
-  data = [
-    { month: 'Jan', billed: 57500, collected: 0, outstanding: 57500 },
-    { month: 'Feb', billed: 57500, collected: 0, outstanding: 57500 },
-    { month: 'Mar', billed: 57500, collected: 0, outstanding: 57500 },
-    { month: 'Apr', billed: 57500, collected: 0, outstanding: 57500 },
-    { month: 'May', billed: 57500, collected: 0, outstanding: 57500 },
-    { month: 'Jun', billed: 85000, collected: 72000, outstanding: 13000 },
-    { month: 'Jul', billed: 87200, collected: 73500, outstanding: 13700 },
-    { month: 'Aug', billed: 88532, collected: 60149, outstanding: 28383 },
-  ],
+  data = [],
 }) => {
   const chartData = data && data.length > 0 ? data : [
     { month: 'Jan', billed: 0, collected: 0, outstanding: 0 },
   ];
 
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(Math.min(1, chartData.length - 1));
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(Math.min(0, chartData.length - 1));
 
-  const maxVal = Math.max(
+  const rawMax = Math.max(
     ...chartData.map((d) => Math.max(d.billed || 0, d.collected || 0, d.outstanding || 0)),
-    50000
+    0
   );
-  const roundedMax = Math.ceil(maxVal / 25000) * 25000;
+  const roundedMax = rawMax > 0 ? Math.ceil(rawMax / 10000) * 10000 : 10000;
 
   const width = 650;
   const height = 240;

@@ -26,6 +26,7 @@ import {
   PaymentMethod,
   RoomStatus,
   YearlyReportData,
+  MonthlyTrendData,
 } from './api/types.ts';
 import { Menu, X } from 'lucide-react';
 
@@ -89,6 +90,7 @@ export default function App() {
     waterPump: 0,
   });
   const [yearlyData, setYearlyData] = useState<YearlyReportData | undefined>(undefined);
+  const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrendData[]>([]);
 
   // Modal States
   const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
@@ -110,6 +112,7 @@ export default function App() {
         fetchedRevenue,
         fetchedMonths,
         fetchedYearly,
+        fetchedTrends,
       ] = await Promise.all([
         api.getRooms(),
         api.getPayments(),
@@ -119,6 +122,7 @@ export default function App() {
         api.getRevenueBreakdown(),
         api.getAvailableMonths(),
         api.getYearlyReport(year),
+        api.getMonthlyTrends(),
       ]);
 
       setRooms(fetchedRooms);
@@ -129,6 +133,7 @@ export default function App() {
       setRevenueBreakdown(fetchedRevenue);
       setAvailableMonths(fetchedMonths);
       setYearlyData(fetchedYearly);
+      setMonthlyTrends(fetchedTrends);
     } catch (err) {
       console.error('Failed to fetch data from API:', err);
     }
@@ -351,6 +356,9 @@ export default function App() {
           <DashboardPage
             metrics={metrics}
             rooms={rooms}
+            settings={settings}
+            revenueBreakdown={revenueBreakdown}
+            monthlyTrends={monthlyTrends}
             selectedMonth={selectedMonth}
             availableMonths={availableMonths}
             onMonthChange={handleMonthChange}
@@ -359,6 +367,7 @@ export default function App() {
             onOpenAddPayment={() => setIsAddPaymentOpen(true)}
             onOpenAddTenant={() => setIsAddTenantOpen(true)}
             onSaveOverhead={(overhead) => handleSaveSettings({ fixedPropertyOverhead: overhead })}
+            onSaveUtilities={(utilities) => handleSaveSettings({ customUtilitiesExpense: utilities })}
           />
         )}
 
@@ -412,11 +421,14 @@ export default function App() {
             metrics={metrics}
             revenueBreakdown={revenueBreakdown}
             yearlyData={yearlyData}
+            monthlyTrends={monthlyTrends}
+            settings={settings}
             selectedMonth={selectedMonth}
             availableMonths={availableMonths}
             onMonthChange={handleMonthChange}
             onOpenAddMonth={() => setIsAddMonthOpen(true)}
             onSaveOverhead={(overhead) => handleSaveSettings({ fixedPropertyOverhead: overhead })}
+            onSaveUtilities={(utilities) => handleSaveSettings({ customUtilitiesExpense: utilities })}
           />
         )}
 

@@ -9,17 +9,18 @@ interface RevenueBreakdownProps {
 }
 
 export const RevenueBreakdownChart: React.FC<RevenueBreakdownProps> = ({
-  rent = 57500,
-  electricity = 16837,
-  water = 14195,
-  waterPump = 1400,
+  rent = 0,
+  electricity = 0,
+  water = 0,
+  waterPump = 0,
   waterAndPump,
 }) => {
   const combinedWaterAndPump = waterAndPump !== undefined ? waterAndPump : (water + waterPump);
-  const total = Math.max(1, rent + electricity + combinedWaterAndPump);
-  const rentPct = rent / total;
-  const elecPct = electricity / total;
-  const waterPumpPct = combinedWaterAndPump / total;
+  const actualTotal = (rent || 0) + (electricity || 0) + (combinedWaterAndPump || 0);
+  const total = Math.max(1, actualTotal);
+  const rentPct = (rent || 0) / total;
+  const elecPct = (electricity || 0) / total;
+  const waterPumpPct = (combinedWaterAndPump || 0) / total;
 
   const radius = 38;
   const circumference = 2 * Math.PI * radius;
@@ -37,6 +38,15 @@ export const RevenueBreakdownChart: React.FC<RevenueBreakdownProps> = ({
       {/* Donut Chart */}
       <div className="relative w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center shrink-0">
         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+          {/* Background neutral ring */}
+          <circle
+            cx="50"
+            cy="50"
+            r={radius}
+            fill="transparent"
+            stroke="#F1F5F9"
+            strokeWidth="14"
+          />
           {/* Rent Segment (Primary Blue) */}
           {rent > 0 && (
             <circle
@@ -82,7 +92,7 @@ export const RevenueBreakdownChart: React.FC<RevenueBreakdownProps> = ({
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
           <span className="text-[10px] uppercase font-bold tracking-wider text-[#64748B]">Total</span>
           <span className="text-xs font-extrabold text-[#0F172A]">
-            ₱{(total ?? 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            ₱{actualTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
           </span>
         </div>
       </div>

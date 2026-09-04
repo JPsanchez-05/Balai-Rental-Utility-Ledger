@@ -8,6 +8,8 @@ export type MetricType =
   | 'rent'
   | 'profit'
   | 'loss'
+  | 'warning'
+  | 'danger'
   | 'pump';
 
 interface MetricCardProps {
@@ -16,9 +18,10 @@ interface MetricCardProps {
   value: string;
   subtitle: string;
   type?: MetricType;
+  valueColor?: string;
   secondaryValue?: string;
   badgeText?: string;
-  badgeType?: 'success' | 'danger' | 'info' | 'neutral';
+  badgeType?: 'success' | 'danger' | 'warning' | 'info' | 'neutral';
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -27,18 +30,23 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   value,
   subtitle,
   type = 'billed',
+  valueColor,
   secondaryValue,
   badgeText,
   badgeType = 'neutral',
 }) => {
   const getValueColor = () => {
+    if (valueColor) return valueColor;
     switch (type) {
       case 'collected':
       case 'profit':
         return 'text-[#059669]'; // Rich emerald
       case 'outstanding':
       case 'loss':
+      case 'danger':
         return 'text-[#E11D48]'; // Bold rose/red
+      case 'warning':
+        return 'text-[#D97706]'; // Amber / Warning
       case 'rent':
         return 'text-[#2563EB]'; // Royal blue
       case 'pump':
@@ -56,6 +64,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         return 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]';
       case 'danger':
         return 'bg-[#FFF1F2] text-[#E11D48] border-[#FECDD3]';
+      case 'warning':
+        return 'bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]';
       case 'info':
         return 'bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE]';
       case 'neutral':

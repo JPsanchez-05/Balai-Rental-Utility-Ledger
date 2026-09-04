@@ -10,23 +10,14 @@ interface OutstandingBalanceChartProps {
 }
 
 export const OutstandingBalanceChart: React.FC<OutstandingBalanceChartProps> = ({
-  data = [
-    { month: 'Jan', outstanding: 57500 },
-    { month: 'Feb', outstanding: 57500 },
-    { month: 'Mar', outstanding: 57500 },
-    { month: 'Apr', outstanding: 57500 },
-    { month: 'May', outstanding: 57500 },
-    { month: 'Jun', outstanding: 13000 },
-    { month: 'Jul', outstanding: 13700 },
-    { month: 'Aug', outstanding: 28383 },
-  ],
+  data = [],
 }) => {
   const chartData = data && data.length > 0 ? data : [
-    { month: 'Jan', outstanding: 0 },
+    { month: 'Aug', outstanding: 0 },
   ];
 
-  const maxVal = Math.max(...chartData.map((d) => d.outstanding || 0), 30000);
-  const roundedMax = Math.ceil(maxVal / 15000) * 15000;
+  const rawMax = Math.max(...chartData.map((d) => d.outstanding || 0), 0);
+  const roundedMax = rawMax > 0 ? Math.ceil(rawMax / 10000) * 10000 : 10000;
 
   const width = 800;
   const height = 180;

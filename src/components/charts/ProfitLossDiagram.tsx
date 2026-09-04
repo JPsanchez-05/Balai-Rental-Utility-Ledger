@@ -8,19 +8,21 @@ export interface ProfitLossDiagramProps {
   waterPumpExpense?: number;
   commonAreaMaintenance?: number;
   initialOverhead?: number;
+  initialCustomUtilities?: number;
   isYearly?: boolean;
   timeLabel?: string;
   onSaveOverhead?: (newOverhead: number) => void;
-  onSaveUtilities?: (newUtilities: number) => void;
+  onSaveUtilities?: (newUtilities?: number) => void;
 }
 
 export const ProfitLossDiagram: React.FC<ProfitLossDiagramProps> = ({
   totalOccupancyRevenue,
-  electricityExpense = 14532,
-  waterExpense = 4500,
-  waterPumpExpense = 1400,
-  commonAreaMaintenance = 1500,
-  initialOverhead = 4500,
+  electricityExpense = 0,
+  waterExpense = 0,
+  waterPumpExpense = 0,
+  commonAreaMaintenance = 0,
+  initialOverhead = 0,
+  initialCustomUtilities,
   isYearly = false,
   timeLabel,
   onSaveOverhead,
@@ -33,7 +35,10 @@ export const ProfitLossDiagram: React.FC<ProfitLossDiagramProps> = ({
     (commonAreaMaintenance || 0);
 
   const [fixedOverhead, setFixedOverhead] = useState<number>(initialOverhead);
-  const [customUtilities, setCustomUtilities] = useState<number>(calculatedUtilities);
+  const [hasCustomOverride, setHasCustomOverride] = useState<boolean>(initialCustomUtilities !== undefined);
+  const [customUtilities, setCustomUtilities] = useState<number>(
+    initialCustomUtilities !== undefined ? initialCustomUtilities : calculatedUtilities
+  );
   const [isEditingUtilities, setIsEditingUtilities] = useState<boolean>(false);
   const [showFormula, setShowFormula] = useState<boolean>(false);
   const [isSaved, setIsSaved] = useState<boolean>(false);
@@ -43,10 +48,13 @@ export const ProfitLossDiagram: React.FC<ProfitLossDiagramProps> = ({
   }, [initialOverhead]);
 
   useEffect(() => {
-    if (!isEditingUtilities) {
+    if (initialCustomUtilities !== undefined) {
+      setCustomUtilities(initialCustomUtilities);
+      setHasCustomOverride(true);
+    } else if (!hasCustomOverride) {
       setCustomUtilities(calculatedUtilities);
     }
-  }, [calculatedUtilities, isEditingUtilities]);
+  }, [initialCustomUtilities, calculatedUtilities, hasCustomOverride]);
 
   const scale = isYearly ? 12 : 1;
   const currentOverhead = fixedOverhead * scale;
@@ -62,12 +70,24 @@ export const ProfitLossDiagram: React.FC<ProfitLossDiagramProps> = ({
   const overheadPct = Math.min(100, Math.max(5, (currentOverhead / totalBarDenominator) * 100));
   const utilitiesPct = 100 - overheadPct;
 
+  const handleToggleEditUtilities = () => {
+    if (isEditingUtilities) {
+      setIsEditingUtilities(false);
+      setHasCustomOverride(true);
+      if (onSaveUtilities) {
+        onSaveUtilities(customUtilities);
+      }
+    } else {
+      setIsEditingUtilities(true);
+    }
+  };
+
   const handleSave = () => {
     if (onSaveOverhead) {
       onSaveOverhead(fixedOverhead);
     }
-    if (onSaveUtilities && isEditingUtilities) {
-      onSaveUtilities(customUtilities);
+    if (onSaveUtilities) {
+      onSaveUtilities(hasCustomOverride ? customUtilities : undefined);
     }
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
@@ -76,7 +96,11 @@ export const ProfitLossDiagram: React.FC<ProfitLossDiagramProps> = ({
   const resetDefaults = () => {
     setFixedOverhead(initialOverhead);
     setCustomUtilities(calculatedUtilities);
+    setHasCustomOverride(false);
     setIsEditingUtilities(false);
+    if (onSaveUtilities) {
+      onSaveUtilities(undefined);
+    }
   };
 
   return (
@@ -207,28 +231,59 @@ export const ProfitLossDiagram: React.FC<ProfitLossDiagramProps> = ({
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-teal-600 inline-block" />
               <div>
-                <span className="text-slate-800 font-semibold flex items-center gap-1">
+                <span className="text-slate-800 font-semibold flex items-center gap-1.5">
                   Utilities & Maintenance
                   <button
+                    id="btn-toggle-edit-utilities"
                     type="button"
-                    onClick={() => setIsEditingUtilities(!isEditingUtilities)}
-                    className="text-emerald-700 hover:text-emerald-900 underline text-[10px] ml-1"
+                    onClick={handleToggleEditUtilities}
+                    className="text-emerald-700 hover:text-emerald-900 font-bold underline text-[11px] ml-1"
                   >
                     {isEditingUtilities ? 'Lock' : 'Edit'}
                   </button>
+                  {hasCustomOverride && !isEditingUtilities && (
+                    <button
+                      id="btn-revert-auto-utilities"
+                      type="button"
+                      onClick={() => {
+                        setHasCustomOverride(false);
+                        setCustomUtilities(calculatedUtilities);
+                        if (onSaveUtilities) onSaveUtilities(undefined);
+                      }}
+                      className="text-slate-400 hover:text-rose-600 underline text-[10px] ml-0.5"
+                      title="Revert to auto-calculated from meter readings"
+                    >
+                      (Auto)
+                    </button>
+                  )}
                 </span>
                 <span className="text-[11px] text-slate-500">
-                  {isEditingUtilities ? 'Custom value override' : 'Auto from Meter Readings & Settings'}
+                  {hasCustomOverride
+                    ? 'Custom value (locked)'
+                    : 'Auto from Meter Readings & Settings'}
                 </span>
               </div>
             </div>
             {isEditingUtilities ? (
-              <input
-                type="number"
-                value={customUtilities}
-                onChange={(e) => setCustomUtilities(Number(e.target.value))}
-                className="w-28 px-2 py-1 text-right font-mono text-sm border border-emerald-500 rounded bg-white shadow-xs focus:outline-hidden"
-              />
+              <div className="flex items-center gap-1">
+                <span className="text-slate-500 font-mono text-xs">₱</span>
+                <input
+                  id="input-edit-custom-utilities"
+                  type="number"
+                  value={customUtilities}
+                  onChange={(e) => {
+                    setCustomUtilities(Number(e.target.value));
+                    setHasCustomOverride(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleToggleEditUtilities();
+                    }
+                  }}
+                  className="w-28 px-2 py-1 text-right font-mono text-sm border border-emerald-500 rounded bg-white shadow-xs focus:outline-hidden"
+                  autoFocus
+                />
+              </div>
             ) : (
               <span className="font-mono font-bold text-slate-900 text-sm">
                 ₱{currentUtilities.toLocaleString()}

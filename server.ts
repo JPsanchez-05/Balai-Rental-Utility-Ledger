@@ -25,6 +25,18 @@ if (connectionString) {
     pgPool.on('error', (err) => {
       console.error('PostgreSQL pool error:', err);
     });
+
+    // Auto-ensure Row Level Security (RLS) is enabled on Supabase / PostgreSQL tables
+    pgPool.query(`
+      ALTER TABLE IF EXISTS public.settings ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE IF EXISTS public.rooms ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE IF EXISTS public.payments ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE IF EXISTS public.expenses ENABLE ROW LEVEL SECURITY;
+    `).then(() => {
+      console.log('Row Level Security (RLS) verified on public tables.');
+    }).catch((err) => {
+      console.warn('Note on RLS check:', err?.message || err);
+    });
   } catch (e) {
     console.warn('Could not initialize pgPool:', e);
   }

@@ -5,7 +5,7 @@ import { CollectionTrendChart } from '../charts/CollectionTrendChart.tsx';
 import { RevenueBreakdownChart } from '../charts/RevenueBreakdownChart.tsx';
 import { OutstandingBalanceChart } from '../charts/OutstandingBalanceChart.tsx';
 import { ProfitLossDiagram } from '../charts/ProfitLossDiagram.tsx';
-import { DashboardMetrics, RevenueBreakdownData, YearlyReportData } from '../../api/types.ts';
+import { DashboardMetrics, MonthlyTrendData, PropertySettings, RevenueBreakdownData, YearlyReportData } from '../../api/types.ts';
 import { ExportModal } from '../modals/ExportModal.tsx';
 import { FileSpreadsheet, FileText, Calendar, BarChart3, ArrowRight, CheckCircle2 } from 'lucide-react';
 
@@ -13,22 +13,28 @@ interface ReportsPageProps {
   metrics: DashboardMetrics;
   revenueBreakdown: RevenueBreakdownData;
   yearlyData?: YearlyReportData;
+  monthlyTrends?: MonthlyTrendData[];
+  settings?: PropertySettings;
   selectedMonth: string;
   availableMonths?: string[];
   onMonthChange: (month: string) => void;
   onOpenAddMonth?: () => void;
   onSaveOverhead?: (newOverhead: number) => void;
+  onSaveUtilities?: (newUtilities?: number) => void;
 }
 
 export const ReportsPage: React.FC<ReportsPageProps> = ({
   metrics,
   revenueBreakdown,
   yearlyData,
+  monthlyTrends,
+  settings,
   selectedMonth,
   availableMonths,
   onMonthChange,
   onOpenAddMonth,
   onSaveOverhead,
+  onSaveUtilities,
 }) => {
   const [viewMode, setViewMode] = useState<'monthly' | 'yearly'>('monthly');
   const [exportModalFormat, setExportModalFormat] = useState<'csv' | 'pdf' | null>(null);
@@ -36,36 +42,47 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
   // Extract year from selectedMonth (e.g. "2026" from "Aug 2026")
   const currentYear = selectedMonth.split(' ')[1] || '2026';
 
-  // Yearly chart datasets
+  // Yearly chart datasets from real yearlyData
   const yearlyTrendData = yearlyData?.monthlyBreakdown?.map((m) => ({
     month: m.monthName,
     billed: m.totalBilled,
     collected: m.totalCollected,
     outstanding: Math.max(0, m.totalBilled - m.totalCollected),
-  })) || [
-    { month: 'Jan', billed: 57500, collected: 0, outstanding: 57500 },
-    { month: 'Feb', billed: 57500, collected: 0, outstanding: 57500 },
-    { month: 'Mar', billed: 57500, collected: 0, outstanding: 57500 },
-    { month: 'Apr', billed: 57500, collected: 0, outstanding: 57500 },
-    { month: 'May', billed: 57500, collected: 0, outstanding: 57500 },
-    { month: 'Jun', billed: 85000, collected: 72000, outstanding: 13000 },
-    { month: 'Jul', billed: 87200, collected: 73500, outstanding: 13700 },
-    { month: 'Aug', billed: 88532, collected: 60149, outstanding: 28383 },
-  ];
+  })) || [];
 
   const yearlyBalanceData = yearlyData?.monthlyBreakdown?.map((m) => ({
     month: m.monthName,
     outstanding: Math.max(0, m.totalBilled - m.totalCollected),
-  })) || [
-    { month: 'Jan', outstanding: 57500 },
-    { month: 'Feb', outstanding: 57500 },
-    { month: 'Mar', outstanding: 57500 },
-    { month: 'Apr', outstanding: 57500 },
-    { month: 'May', outstanding: 57500 },
-    { month: 'Jun', outstanding: 13000 },
-    { month: 'Jul', outstanding: 13700 },
-    { month: 'Aug', outstanding: 28383 },
-  ];
+  })) || [];
+
+  // Monthly chart datasets from actual data
+  const monthlyTrendData = monthlyTrends && monthlyTrends.length > 0
+    ? monthlyTrends.map((m) => ({
+        month: m.month,
+        billed: m.billed,
+        collected: m.collected,
+        outstanding: m.outstanding,
+      }))
+    : [
+        {
+          month: selectedMonth.split(' ')[0] || 'Aug',
+          billed: metrics.totalBilled || 0,
+          collected: metrics.totalCollected || 0,
+          outstanding: metrics.outstanding || 0,
+        },
+      ];
+
+  const monthlyBalanceData = monthlyTrends && monthlyTrends.length > 0
+    ? monthlyTrends.map((m) => ({
+        month: m.month,
+        outstanding: m.outstanding,
+      }))
+    : [
+        {
+          month: selectedMonth.split(' ')[0] || 'Aug',
+          outstanding: metrics.outstanding || 0,
+        },
+      ];
 
   const isYearly = viewMode === 'yearly';
 
@@ -136,63 +153,121 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
       />
 
       {/* 4 Financial Metric Summary Cards */}
-      <div className="metrics-grid-4">
-        <MetricCard
-          id="report-metric-billed"
-          title="TOTAL BILLS"
-          value={`₱${(isYearly ? (yearlyData?.annualBilled ?? 0) : (metrics.totalBilled ?? 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-          subtitle={isYearly ? 'Full year invoiced' : `${metrics.occupiedRoomsCount ?? 0} units billed`}
-          secondaryValue={`${isYearly ? (yearlyData?.averageCollectionRate ?? 0) : (metrics.collectionRate ?? 0)}% rate`}
-          type="billed"
-          badgeText={isYearly ? 'Annual Total' : 'Billed'}
-          badgeType="neutral"
-        />
+      {(() => {
+        const currentBilled = isYearly ? (yearlyData?.annualBilled ?? 0) : (metrics.totalBilled ?? 0);
+        const currentCollected = isYearly ? (yearlyData?.annualCollected ?? 0) : (metrics.totalCollected ?? 0);
+        const billsPaidPct = currentBilled > 0 ? (currentCollected / currentBilled) * 100 : 0;
 
-        <MetricCard
-          id="report-metric-collected"
-          title="TOTAL BILLS PAID"
-          value={`₱${(isYearly ? (yearlyData?.annualCollected ?? 0) : (metrics.totalCollected ?? 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-          subtitle={
-            isYearly
-              ? `Due: ₱${Math.max(0, (yearlyData?.annualBilled || 0) - (yearlyData?.annualCollected || 0)).toLocaleString('en-US', { minimumFractionDigits: 0 })}`
-              : `Due: ₱${(metrics.outstanding ?? 0).toLocaleString('en-US', { minimumFractionDigits: 0 })}`
-          }
-          secondaryValue={isYearly ? 'Cleared payments' : `${metrics.roomsWithBalance ?? 0} balances`}
-          type="collected"
-          badgeText={isYearly ? 'Annual Cleared' : 'Cleared'}
-          badgeType="success"
-        />
+        let billsPaidColor = 'text-[#E11D48]';
+        let billsPaidType: 'collected' | 'danger' | 'warning' = 'danger';
+        let billsPaidBadgeType: 'success' | 'danger' | 'warning' = 'danger';
+        let billsPaidBadgeText = 'Unpaid';
 
-        <MetricCard
-          id="report-metric-rent"
-          title="TOTAL RENT"
-          value={`₱${(isYearly ? (yearlyData?.annualRentBilled ?? 0) : (metrics.totalRentBilled ?? 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-          subtitle={isYearly ? 'Scheduled annual base rent' : 'Scheduled base rent'}
-          secondaryValue={isYearly ? '12 months' : `${metrics.occupiedRoomsCount ?? 0} units`}
-          type="rent"
-          badgeText="Scheduled"
-          badgeType="info"
-        />
+        if (currentBilled > 0 && currentCollected >= currentBilled) {
+          billsPaidColor = 'text-[#059669]';
+          billsPaidType = 'collected';
+          billsPaidBadgeType = 'success';
+          billsPaidBadgeText = isYearly ? 'Annual Cleared' : 'Cleared';
+        } else if (currentBilled > 0 && billsPaidPct >= 50) {
+          billsPaidColor = 'text-[#D97706]';
+          billsPaidType = 'warning';
+          billsPaidBadgeType = 'warning';
+          billsPaidBadgeText = `${Math.round(billsPaidPct)}% Paid`;
+        } else {
+          billsPaidColor = 'text-[#E11D48]';
+          billsPaidType = 'danger';
+          billsPaidBadgeType = 'danger';
+          billsPaidBadgeText = currentCollected > 0 ? `${Math.round(billsPaidPct)}% Paid` : 'Unpaid';
+        }
 
-        <MetricCard
-          id="report-metric-rent-paid"
-          title="TOTAL RENT PAID"
-          value={`₱${(isYearly ? (yearlyData?.annualRentPaid ?? 0) : (metrics.totalRentPaid ?? 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-          subtitle={
-            isYearly
-              ? `Bal: ₱${Math.max(0, (yearlyData?.annualRentBilled || 0) - (yearlyData?.annualRentPaid || 0)).toLocaleString('en-US', { minimumFractionDigits: 0 })}`
-              : `Bal: ₱${Math.max(0, (metrics.totalRentBilled ?? 0) - (metrics.totalRentPaid ?? 0)).toLocaleString('en-US', { minimumFractionDigits: 0 })}`
-          }
-          secondaryValue={
-            isYearly
-              ? `${(yearlyData?.annualRentBilled || 0) > 0 ? Math.min(100, Math.round(((yearlyData?.annualRentPaid || 0) / (yearlyData?.annualRentBilled || 1)) * 100)) : 0}% paid`
-              : `${(metrics.totalRentBilled ?? 0) > 0 ? Math.min(100, Math.round(((metrics.totalRentPaid ?? 0) / (metrics.totalRentBilled || 1)) * 100)) : 0}% paid`
-          }
-          type="collected"
-          badgeText="Rent Collected"
-          badgeType="success"
-        />
-      </div>
+        const currentRentBilled = isYearly ? (yearlyData?.annualRentBilled ?? 0) : (metrics.totalRentBilled ?? 0);
+        const currentRentPaid = isYearly ? (yearlyData?.annualRentPaid ?? 0) : (metrics.totalRentPaid ?? 0);
+        const rentPaidPct = currentRentBilled > 0 ? (currentRentPaid / currentRentBilled) * 100 : 0;
+
+        let rentPaidColor = 'text-[#E11D48]';
+        let rentPaidType: 'collected' | 'danger' | 'warning' = 'danger';
+        let rentPaidBadgeType: 'success' | 'danger' | 'warning' = 'danger';
+        let rentPaidBadgeText = 'Unpaid';
+
+        if (currentRentBilled > 0 && currentRentPaid >= currentRentBilled) {
+          rentPaidColor = 'text-[#059669]';
+          rentPaidType = 'collected';
+          rentPaidBadgeType = 'success';
+          rentPaidBadgeText = 'Rent Collected';
+        } else if (currentRentBilled > 0 && rentPaidPct >= 50) {
+          rentPaidColor = 'text-[#D97706]';
+          rentPaidType = 'warning';
+          rentPaidBadgeType = 'warning';
+          rentPaidBadgeText = `${Math.round(rentPaidPct)}% Paid`;
+        } else {
+          rentPaidColor = 'text-[#E11D48]';
+          rentPaidType = 'danger';
+          rentPaidBadgeType = 'danger';
+          rentPaidBadgeText = currentRentPaid > 0 ? `${Math.round(rentPaidPct)}% Paid` : 'Unpaid';
+        }
+
+        return (
+          <div className="metrics-grid-4">
+            <MetricCard
+              id="report-metric-billed"
+              title="TOTAL BILLS"
+              value={`₱${currentBilled.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+              subtitle={isYearly ? 'Full year invoiced' : `${metrics.occupiedRoomsCount ?? 0} units billed`}
+              secondaryValue={`${isYearly ? (yearlyData?.averageCollectionRate ?? 0) : (metrics.collectionRate ?? 0)}% rate`}
+              type="billed"
+              badgeText={isYearly ? 'Annual Total' : 'Billed'}
+              badgeType="neutral"
+            />
+
+            <MetricCard
+              id="report-metric-collected"
+              title="TOTAL BILLS PAID"
+              value={`₱${currentCollected.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+              subtitle={
+                isYearly
+                  ? `Due: ₱${Math.max(0, (yearlyData?.annualBilled || 0) - (yearlyData?.annualCollected || 0)).toLocaleString('en-US', { minimumFractionDigits: 0 })}`
+                  : `Due: ₱${(metrics.outstanding ?? 0).toLocaleString('en-US', { minimumFractionDigits: 0 })}`
+              }
+              secondaryValue={isYearly ? 'Cleared payments' : `${metrics.roomsWithBalance ?? 0} balances`}
+              type={billsPaidType}
+              valueColor={billsPaidColor}
+              badgeText={billsPaidBadgeText}
+              badgeType={billsPaidBadgeType}
+            />
+
+            <MetricCard
+              id="report-metric-rent"
+              title="TOTAL RENT"
+              value={`₱${currentRentBilled.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+              subtitle={isYearly ? 'Scheduled annual base rent' : 'Scheduled base rent'}
+              secondaryValue={isYearly ? '12 months' : `${metrics.occupiedRoomsCount ?? 0} units`}
+              type="rent"
+              badgeText="Scheduled"
+              badgeType="info"
+            />
+
+            <MetricCard
+              id="report-metric-rent-paid"
+              title="TOTAL RENT PAID"
+              value={`₱${currentRentPaid.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+              subtitle={
+                isYearly
+                  ? `Bal: ₱${Math.max(0, (yearlyData?.annualRentBilled || 0) - (yearlyData?.annualRentPaid || 0)).toLocaleString('en-US', { minimumFractionDigits: 0 })}`
+                  : `Bal: ₱${Math.max(0, (metrics.totalRentBilled ?? 0) - (metrics.totalRentPaid ?? 0)).toLocaleString('en-US', { minimumFractionDigits: 0 })}`
+              }
+              secondaryValue={
+                isYearly
+                  ? `${(yearlyData?.annualRentBilled || 0) > 0 ? Math.min(100, Math.round(((yearlyData?.annualRentPaid || 0) / (yearlyData?.annualRentBilled || 1)) * 100)) : 0}% paid`
+                  : `${(metrics.totalRentBilled ?? 0) > 0 ? Math.min(100, Math.round(((metrics.totalRentPaid ?? 0) / (metrics.totalRentBilled || 1)) * 100)) : 0}% paid`
+              }
+              type={rentPaidType}
+              valueColor={rentPaidColor}
+              badgeText={rentPaidBadgeText}
+              badgeType={rentPaidBadgeType}
+            />
+          </div>
+        );
+      })()}
 
       {/* Profit & Loss Interactive Diagram Visualization with Formula & Adjustable Overhead */}
       <ProfitLossDiagram
@@ -203,20 +278,22 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         }
         electricityExpense={
           isYearly
-            ? (yearlyData?.annualElectricity ? Math.round(yearlyData.annualElectricity / 12) : 14532)
-            : (metrics.totalUtilitiesBilled > 0 ? Math.round(metrics.totalUtilitiesBilled * 0.72) : 14532)
+            ? (yearlyData?.annualElectricity ? Math.round(yearlyData.annualElectricity / 12) : 0)
+            : (revenueBreakdown?.electricity ?? (metrics.totalUtilitiesBilled > 0 ? Math.round(metrics.totalUtilitiesBilled * 0.72) : 0))
         }
         waterExpense={
           isYearly
-            ? (yearlyData?.annualWaterAndPump ? Math.round((yearlyData.annualWaterAndPump * 0.75) / 12) : 4500)
-            : (metrics.totalUtilitiesBilled > 0 ? Math.round(metrics.totalUtilitiesBilled * 0.28) : 4500)
+            ? (yearlyData?.annualWaterAndPump ? Math.round((yearlyData.annualWaterAndPump * 0.75) / 12) : 0)
+            : (revenueBreakdown?.water ?? (metrics.totalUtilitiesBilled > 0 ? Math.round(metrics.totalUtilitiesBilled * 0.28) : 0))
         }
-        waterPumpExpense={metrics.waterPumpFeeTotal ?? 1400}
-        commonAreaMaintenance={metrics.commonAreaMaintenance ?? 1500}
-        initialOverhead={metrics.fixedPropertyOverhead ?? 4500}
+        waterPumpExpense={metrics.waterPumpFeeTotal ?? 0}
+        commonAreaMaintenance={metrics.commonAreaMaintenance ?? 0}
+        initialOverhead={settings?.fixedPropertyOverhead ?? metrics.fixedPropertyOverhead ?? 0}
+        initialCustomUtilities={settings?.customUtilitiesExpense}
         isYearly={isYearly}
         timeLabel={isYearly ? `Year ${yearlyData?.year || currentYear}` : selectedMonth}
         onSaveOverhead={onSaveOverhead}
+        onSaveUtilities={onSaveUtilities}
       />
 
       {/* Charts Grid: Monthly/Yearly Collection Trend & Revenue Breakdown */}
@@ -229,7 +306,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
             </h3>
           </div>
           <div className="chart-card-body">
-            <CollectionTrendChart data={isYearly ? yearlyTrendData : undefined} />
+            <CollectionTrendChart data={isYearly ? yearlyTrendData : monthlyTrendData} />
           </div>
         </div>
 
@@ -261,7 +338,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
             {isYearly ? `12-Month Outstanding Balance Trend (${currentYear})` : 'Outstanding Balance Trend'}
           </h3>
         </div>
-        <OutstandingBalanceChart data={isYearly ? yearlyBalanceData : undefined} />
+        <OutstandingBalanceChart data={isYearly ? yearlyBalanceData : monthlyBalanceData} />
       </div>
 
       {/* When in Yearly Mode: 12-Month Detailed Performance Table */}

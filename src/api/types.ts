@@ -89,6 +89,7 @@ export interface PropertySettings {
   monthlyWaterPumpFee: number; // Total water pump fee distributed across occupied tenants (₱)
   fixedPropertyOverhead: number; // Fixed Property Rent / Overhead (₱) e.g., ₱4,500
   commonAreaMaintenance: number; // Common Area Maintenance (₱) e.g., ₱1,500
+  customUtilitiesExpense?: number; // Optional user override for utilities & maintenance
   monthlyOperatingExpense: number; // Monthly property operating/maintenance expense (₱)
   version: string;
   totalRooms: number;

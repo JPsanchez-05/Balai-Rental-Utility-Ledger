@@ -6,13 +6,16 @@ import { MonthlyCollectionsChart } from '../charts/MonthlyCollectionsChart.tsx';
 import { PaidVsOutstandingChart } from '../charts/PaidVsOutstandingChart.tsx';
 import { RoomPerformanceChart } from '../charts/RoomPerformanceChart.tsx';
 import { ProfitLossDiagram } from '../charts/ProfitLossDiagram.tsx';
-import { DashboardMetrics, Room } from '../../api/types.ts';
+import { DashboardMetrics, MonthlyTrendData, PropertySettings, RevenueBreakdownData, Room } from '../../api/types.ts';
 import { Plus, Clock, FileText, UserPlus } from 'lucide-react';
 import { PageId } from '../layout/Sidebar.tsx';
 
 interface DashboardPageProps {
   metrics: DashboardMetrics;
   rooms: Room[];
+  settings?: PropertySettings;
+  revenueBreakdown?: RevenueBreakdownData;
+  monthlyTrends?: MonthlyTrendData[];
   selectedMonth: string;
   availableMonths?: string[];
   onMonthChange: (month: string) => void;
@@ -21,11 +24,15 @@ interface DashboardPageProps {
   onOpenAddPayment: () => void;
   onOpenAddTenant: () => void;
   onSaveOverhead?: (newOverhead: number) => void;
+  onSaveUtilities?: (newUtilities?: number) => void;
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
   metrics,
   rooms,
+  settings,
+  revenueBreakdown,
+  monthlyTrends,
   selectedMonth,
   availableMonths,
   onMonthChange,
@@ -34,6 +41,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onOpenAddPayment,
   onOpenAddTenant,
   onSaveOverhead,
+  onSaveUtilities,
 }) => {
   const outstandingRooms = rooms.filter((r) => r.status === 'Occupied' && r.balance > 0);
 
@@ -44,6 +52,61 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       billed: r.billed,
       collected: r.collected,
     }));
+
+  // Dynamic Color Coding Logic:
+  // Red when total bills paid < 50% of total bills (or 0); amber when 50%-99%; green only on full payment (100%).
+  const totalBilled = metrics.totalBilled ?? 0;
+  const totalCollected = metrics.totalCollected ?? 0;
+  const billsPaidPct = totalBilled > 0 ? (totalCollected / totalBilled) * 100 : 0;
+
+  let billsPaidColor = 'text-[#E11D48]';
+  let billsPaidType: 'collected' | 'danger' | 'warning' = 'danger';
+  let billsPaidBadgeType: 'success' | 'danger' | 'warning' = 'danger';
+  let billsPaidBadgeText = 'Unpaid';
+
+  if (totalBilled > 0 && totalCollected >= totalBilled) {
+    billsPaidColor = 'text-[#059669]';
+    billsPaidType = 'collected';
+    billsPaidBadgeType = 'success';
+    billsPaidBadgeText = 'Cleared';
+  } else if (totalBilled > 0 && billsPaidPct >= 50) {
+    billsPaidColor = 'text-[#D97706]';
+    billsPaidType = 'warning';
+    billsPaidBadgeType = 'warning';
+    billsPaidBadgeText = `${Math.round(billsPaidPct)}% Paid`;
+  } else {
+    billsPaidColor = 'text-[#E11D48]';
+    billsPaidType = 'danger';
+    billsPaidBadgeType = 'danger';
+    billsPaidBadgeText = totalCollected > 0 ? `${Math.round(billsPaidPct)}% Paid` : 'Unpaid';
+  }
+
+  // Same color coding logic for Total Rent Paid:
+  const rentBilled = metrics.totalRentBilled ?? 0;
+  const rentPaid = metrics.totalRentPaid ?? 0;
+  const rentPaidPct = rentBilled > 0 ? (rentPaid / rentBilled) * 100 : 0;
+
+  let rentPaidColor = 'text-[#E11D48]';
+  let rentPaidType: 'collected' | 'danger' | 'warning' = 'danger';
+  let rentPaidBadgeType: 'success' | 'danger' | 'warning' = 'danger';
+  let rentPaidBadgeText = 'Unpaid';
+
+  if (rentBilled > 0 && rentPaid >= rentBilled) {
+    rentPaidColor = 'text-[#059669]';
+    rentPaidType = 'collected';
+    rentPaidBadgeType = 'success';
+    rentPaidBadgeText = 'Rent Collected';
+  } else if (rentBilled > 0 && rentPaidPct >= 50) {
+    rentPaidColor = 'text-[#D97706]';
+    rentPaidType = 'warning';
+    rentPaidBadgeType = 'warning';
+    rentPaidBadgeText = `${Math.round(rentPaidPct)}% Paid`;
+  } else {
+    rentPaidColor = 'text-[#E11D48]';
+    rentPaidType = 'danger';
+    rentPaidBadgeType = 'danger';
+    rentPaidBadgeText = rentPaid > 0 ? `${Math.round(rentPaidPct)}% Paid` : 'Unpaid';
+  }
 
   return (
     <div className="space-y-6">
@@ -118,9 +181,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           value={`₱${(metrics.totalCollected ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
           subtitle={`Due: ₱${(metrics.outstanding ?? 0).toLocaleString('en-US', { minimumFractionDigits: 0 })}`}
           secondaryValue={`${metrics.roomsWithBalance ?? 0} balances`}
-          type="collected"
-          badgeText="Cleared"
-          badgeType="success"
+          type={billsPaidType}
+          valueColor={billsPaidColor}
+          badgeText={billsPaidBadgeText}
+          badgeType={billsPaidBadgeType}
         />
         <MetricCard
           id="metric-total-rent"
@@ -137,23 +201,26 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           title="TOTAL RENT PAID"
           value={`₱${(metrics.totalRentPaid ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
           subtitle={`Bal: ₱${Math.max(0, (metrics.totalRentBilled ?? 0) - (metrics.totalRentPaid ?? 0)).toLocaleString('en-US', { minimumFractionDigits: 0 })}`}
-          secondaryValue={`${(metrics.totalRentBilled ?? 0) > 0 ? Math.min(100, Math.round(((metrics.totalRentPaid ?? 0) / (metrics.totalRentBilled || 1)) * 100)) : 0}% paid`}
-          type="collected"
-          badgeText="Rent Collected"
-          badgeType="success"
+          secondaryValue={`${rentBilled > 0 ? Math.min(100, Math.round(rentPaidPct)) : 0}% paid`}
+          type={rentPaidType}
+          valueColor={rentPaidColor}
+          badgeText={rentPaidBadgeText}
+          badgeType={rentPaidBadgeType}
         />
       </div>
 
       {/* Profit & Loss Interactive Diagram Visualization with Formula & Adjustable Overhead */}
       <ProfitLossDiagram
         totalOccupancyRevenue={metrics.totalOccupancyRevenue ?? metrics.totalBilled}
-        electricityExpense={metrics.totalUtilitiesBilled > 0 ? Math.round(metrics.totalUtilitiesBilled * 0.72) : 14532}
-        waterExpense={metrics.totalUtilitiesBilled > 0 ? Math.round(metrics.totalUtilitiesBilled * 0.28) : 4500}
-        waterPumpExpense={metrics.waterPumpFeeTotal ?? 1400}
-        commonAreaMaintenance={metrics.commonAreaMaintenance ?? 1500}
-        initialOverhead={metrics.fixedPropertyOverhead ?? 4500}
+        electricityExpense={revenueBreakdown?.electricity ?? (metrics.totalUtilitiesBilled > 0 ? Math.round(metrics.totalUtilitiesBilled * 0.72) : 0)}
+        waterExpense={revenueBreakdown?.water ?? (metrics.totalUtilitiesBilled > 0 ? Math.round(metrics.totalUtilitiesBilled * 0.28) : 0)}
+        waterPumpExpense={metrics.waterPumpFeeTotal ?? 0}
+        commonAreaMaintenance={metrics.commonAreaMaintenance ?? 0}
+        initialOverhead={settings?.fixedPropertyOverhead ?? metrics.fixedPropertyOverhead ?? 0}
+        initialCustomUtilities={settings?.customUtilitiesExpense}
         timeLabel={selectedMonth}
         onSaveOverhead={onSaveOverhead}
+        onSaveUtilities={onSaveUtilities}
       />
 
       {/* Row of 2 Charts: Monthly Collections & Paid vs Outstanding */}
@@ -164,7 +231,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <h3 className="chart-card-title">Monthly Collections</h3>
           </div>
           <div className="chart-card-body">
-            <MonthlyCollectionsChart />
+            <MonthlyCollectionsChart data={monthlyTrends} />
           </div>
         </div>
 

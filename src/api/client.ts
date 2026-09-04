@@ -489,12 +489,15 @@ class ApiService {
     const totalOccupancyRevenue = totalRentBilled;
     
     // Total Utility Expenses & Property Operating Expenses
-    const fixedPropertyOverhead = this.settings.fixedPropertyOverhead ?? 4500;
-    const commonAreaMaintenance = this.settings.commonAreaMaintenance ?? 1500;
-    const totalUtilityExpenses = totalUtilitiesBilled + (this.settings.monthlyWaterPumpFee || 0) + commonAreaMaintenance;
+    const fixedPropertyOverhead = this.settings.fixedPropertyOverhead ?? 0;
+    const commonAreaMaintenance = this.settings.commonAreaMaintenance ?? 0;
+    const totalUtilityExpenses =
+      this.settings.customUtilitiesExpense !== undefined
+        ? this.settings.customUtilitiesExpense
+        : totalUtilitiesBilled + (this.settings.monthlyWaterPumpFee || 0) + commonAreaMaintenance;
     
-    // Total Monthly Operating Expenses: Fixed Property Overhead + Common Area Maintenance (Utilities are tenant pass-through)
-    const operatingExpenses = fixedPropertyOverhead + commonAreaMaintenance;
+    // Total Monthly Operating Expenses: Fixed Property Overhead + Utilities/Maintenance
+    const operatingExpenses = fixedPropertyOverhead + totalUtilityExpenses;
     
     // Net Monthly Surplus / Deficit & Margin
     const netSurplusDeficit = totalOccupancyRevenue - operatingExpenses;
@@ -734,7 +737,31 @@ class ApiService {
 
   // Reports
   public async getMonthlyTrends(): Promise<MonthlyTrendData[]> {
-    return [...this.trends];
+    const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const keys = Object.keys(this.months);
+    if (keys.length === 0) {
+      return [];
+    }
+
+    const sortedKeys = [...keys].sort((a, b) => {
+      const [aMonth, aYear] = a.split(' ');
+      const [bMonth, bYear] = b.split(' ');
+      if (aYear !== bYear) return Number(aYear) - Number(bYear);
+      return monthOrder.indexOf(aMonth) - monthOrder.indexOf(bMonth);
+    });
+
+    return sortedKeys.map((key) => {
+      const store = this.months[key];
+      const occupied = store?.rooms?.filter((r) => r.status === 'Occupied' && r.tenant) || [];
+      const billed = occupied.reduce((sum, r) => sum + r.billed, 0);
+      const collected = occupied.reduce((sum, r) => sum + r.collected, 0);
+      return {
+        month: key.split(' ')[0],
+        billed,
+        collected,
+        outstanding: Math.max(0, billed - collected),
+      };
+    });
   }
 
   public async getRevenueBreakdown(): Promise<RevenueBreakdownData> {
@@ -757,7 +784,6 @@ class ApiService {
   // Yearly Report Breakdown
   public async getYearlyReport(year: number = 2026): Promise<YearlyReportData> {
     const monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const opEx = this.settings.monthlyOperatingExpense || 12000;
     const monthlyBreakdown: YearlyMonthSummary[] = [];
 
     let annualBilled = 0;
@@ -772,9 +798,6 @@ class ApiService {
     let annualOpEx = 0;
     let totalOccupancyPercent = 0;
     let recordedMonthsCount = 0;
-
-    const currentMonthName = this.activeMonth ? this.activeMonth.split(' ')[0] : 'Aug';
-    const currentMonthIdx = Math.max(7, monthsNames.indexOf(currentMonthName));
 
     for (const mName of monthsNames) {
       const monthKey = `${mName} ${year}`;
@@ -807,10 +830,13 @@ class ApiService {
         }, 0);
 
         const mOccupancyRevenue = mRent;
-        const mFixedOverhead = this.settings.fixedPropertyOverhead ?? 4500;
-        const mCAM = this.settings.commonAreaMaintenance ?? 1500;
-        const mUtilityExpenses = mElec + mWaterPump + mCAM;
-        const mOpEx = mFixedOverhead + mCAM;
+        const mFixedOverhead = this.settings.fixedPropertyOverhead ?? 0;
+        const mCAM = this.settings.commonAreaMaintenance ?? 0;
+        const mUtilityExpenses =
+          this.settings.customUtilitiesExpense !== undefined
+            ? this.settings.customUtilitiesExpense
+            : mElec + mWaterPump + mCAM;
+        const mOpEx = mFixedOverhead + mUtilityExpenses;
         const mSurplusDeficit = mOccupancyRevenue - mOpEx;
         const isNetProfit = mSurplusDeficit >= 0;
         const netProfit = mSurplusDeficit > 0 ? mSurplusDeficit : 0;
@@ -822,7 +848,7 @@ class ApiService {
           monthKey,
           monthName: mName,
           occupiedUnits: occupied.length,
-          totalUnits: storeMonth.rooms.length || 8,
+          totalUnits: storeMonth.rooms.length || this.settings.totalRooms || 6,
           rentBilled: mRent,
           rentPaid: mRentPaid,
           electricityBilled: mElec,
@@ -855,66 +881,30 @@ class ApiService {
         totalOccupancyPercent += storeMonth.rooms.length > 0 ? (occupied.length / storeMonth.rooms.length) * 100 : 0;
         recordedMonthsCount++;
       } else {
-        // Historical / standard model for months without separate manual entry yet
-        const trendMatch = this.trends.find((t) => t.month === mName);
-        const mBilled = trendMatch ? trendMatch.billed : 57500;
-        const mCollected = trendMatch ? trendMatch.collected : (monthsNames.indexOf(mName) <= currentMonthIdx ? 50000 : 0);
-        const mRent = 57500;
-        const mRentPaid = Math.min(mRent, mCollected);
-        const mElec = mBilled > mRent ? Math.round((mBilled - mRent) * 0.55) : 0;
-        const mWaterPump = mBilled > mRent ? (mBilled - mRent - mElec) : 0;
-
-        const isPastOrCurrent = monthsNames.indexOf(mName) <= currentMonthIdx;
-        const mOccupancyRevenue = isPastOrCurrent ? mBilled : 0;
-        const mFixedOverhead = isPastOrCurrent ? (this.settings.fixedPropertyOverhead ?? 4500) : 0;
-        const mCAM = isPastOrCurrent ? (this.settings.commonAreaMaintenance ?? 1500) : 0;
-        const mUtilityExpenses = isPastOrCurrent ? (mElec + mWaterPump + mCAM) : 0;
-        const mOpEx = isPastOrCurrent ? (mFixedOverhead + mUtilityExpenses) : 0;
-        const mSurplusDeficit = isPastOrCurrent ? (mOccupancyRevenue - mOpEx) : 0;
-        const isNetProfit = mSurplusDeficit >= 0;
-        const netProfit = mSurplusDeficit > 0 ? mSurplusDeficit : 0;
-        const netLoss = mSurplusDeficit < 0 ? Math.abs(mSurplusDeficit) : 0;
-        const mMargin = mOccupancyRevenue > 0 ? Math.round((mSurplusDeficit / mOccupancyRevenue) * 100) : 0;
-        const collRate = mBilled > 0 && mCollected > 0 ? Math.round((mCollected / mBilled) * 100) : 0;
-
+        // Unrecorded month with no manual entry
         monthlyBreakdown.push({
           monthKey,
           monthName: mName,
-          occupiedUnits: isPastOrCurrent ? 7 : 0,
-          totalUnits: 8,
-          rentBilled: isPastOrCurrent ? mRent : 0,
-          rentPaid: isPastOrCurrent ? mRentPaid : 0,
-          electricityBilled: mElec,
-          waterAndPumpBilled: mWaterPump,
-          totalBilled: isPastOrCurrent ? mBilled : 0,
-          totalCollected: mCollected,
-          totalOccupancyRevenue: mOccupancyRevenue,
-          totalUtilityExpenses: mUtilityExpenses,
-          fixedPropertyOverhead: mFixedOverhead,
-          operatingExpense: mOpEx,
-          netSurplusDeficit: mSurplusDeficit,
-          netProfitMargin: mMargin,
-          netProfit,
-          netLoss,
-          isNetProfit,
-          collectionRate: collRate,
-          hasData: isPastOrCurrent,
+          occupiedUnits: 0,
+          totalUnits: this.settings.totalRooms || 6,
+          rentBilled: 0,
+          rentPaid: 0,
+          electricityBilled: 0,
+          waterAndPumpBilled: 0,
+          totalBilled: 0,
+          totalCollected: 0,
+          totalOccupancyRevenue: 0,
+          totalUtilityExpenses: 0,
+          fixedPropertyOverhead: 0,
+          operatingExpense: 0,
+          netSurplusDeficit: 0,
+          netProfitMargin: 0,
+          netProfit: 0,
+          netLoss: 0,
+          isNetProfit: true,
+          collectionRate: 0,
+          hasData: false,
         });
-
-        if (isPastOrCurrent) {
-          annualBilled += mBilled;
-          annualCollected += mCollected;
-          annualRentBilled += mRent;
-          annualRentPaid += mRentPaid;
-          annualElectricity += mElec;
-          annualWaterAndPump += mWaterPump;
-          annualOccupancyRevenue += mOccupancyRevenue;
-          annualUtilityExpenses += mUtilityExpenses;
-          annualFixedOverhead += mFixedOverhead;
-          annualOpEx += mOpEx;
-          totalOccupancyPercent += 87.5;
-          recordedMonthsCount++;
-        }
       }
     }
 

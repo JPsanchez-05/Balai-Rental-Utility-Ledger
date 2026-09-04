@@ -5,18 +5,18 @@ interface MonthlyCollectionsChartProps {
 }
 
 export const MonthlyCollectionsChart: React.FC<MonthlyCollectionsChartProps> = ({
-  data = [
-    { month: 'Mar', billed: 57500, collected: 0 },
-    { month: 'Apr', billed: 57500, collected: 0 },
-    { month: 'May', billed: 57500, collected: 0 },
-    { month: 'Jun', billed: 85000, collected: 72000 },
-    { month: 'Jul', billed: 87200, collected: 73500 },
-    { month: 'Aug', billed: 88532, collected: 60149 },
-  ],
+  data = [],
 }) => {
+  const chartData = data && data.length > 0 ? data : [
+    { month: 'Aug', billed: 0, collected: 0 },
+  ];
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
-  const maxVal = 100000;
+  const rawMax = Math.max(
+    ...chartData.map((d) => Math.max(d.billed || 0, d.collected || 0)),
+    0
+  );
+  const maxVal = rawMax > 0 ? Math.ceil(rawMax / 10000) * 10000 : 10000;
   const width = 600;
   const height = 220;
   const paddingLeft = 50;
@@ -28,7 +28,8 @@ export const MonthlyCollectionsChart: React.FC<MonthlyCollectionsChartProps> = (
   const chartHeight = height - paddingTop - paddingBottom;
 
   const getX = (index: number) => {
-    return paddingLeft + (index / (data.length - 1)) * chartWidth;
+    if (chartData.length <= 1) return paddingLeft + chartWidth / 2;
+    return paddingLeft + (index / (chartData.length - 1)) * chartWidth;
   };
 
   const getY = (val: number) => {
@@ -36,14 +37,14 @@ export const MonthlyCollectionsChart: React.FC<MonthlyCollectionsChartProps> = (
   };
 
   // Generate smooth SVG paths
-  const billedPoints = data.map((d, i) => `${getX(i)},${getY(d.billed)}`).join(' ');
-  const collectedPoints = data.map((d, i) => `${getX(i)},${getY(d.collected)}`).join(' ');
+  const billedPoints = chartData.map((d, i) => `${getX(i)},${getY(d.billed)}`).join(' ');
+  const collectedPoints = chartData.map((d, i) => `${getX(i)},${getY(d.collected)}`).join(' ');
 
   const yTicks = [
-    { label: '₱100k', val: 100000 },
-    { label: '₱75k', val: 75000 },
-    { label: '₱50k', val: 50000 },
-    { label: '₱25k', val: 25000 },
+    { label: `₱${(maxVal / 1000).toFixed(0)}k`, val: maxVal },
+    { label: `₱${((maxVal * 0.75) / 1000).toFixed(0)}k`, val: maxVal * 0.75 },
+    { label: `₱${((maxVal * 0.5) / 1000).toFixed(0)}k`, val: maxVal * 0.5 },
+    { label: `₱${((maxVal * 0.25) / 1000).toFixed(0)}k`, val: maxVal * 0.25 },
     { label: '₱0k', val: 0 },
   ];
 
